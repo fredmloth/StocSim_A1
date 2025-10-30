@@ -30,11 +30,12 @@ def torus(x, y, z, bigR, smallr):
 
 # Monte carlo integration
 def montecarlo(radius, k, bigr, smallr, throws):
-    
+    intersection = 0
     for _ in range(throws):
         x, y, z = uniformrandom(radius)
         if sphere(x, y, z, k) and torus(x, y, z, bigr, smallr):
             print(f"intersection at point x:{x}, y:{y}, z:{z}")
+            intersection+=1
 
     return #volume
 
