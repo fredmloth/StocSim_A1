@@ -68,14 +68,14 @@ def get_coords(points_list):
     return arr[:, 0], arr[:, 1], arr[:, 2]
 
 
-def plotintersection(N, radius, k, bigr, smallr, xc=0, yc=0, zc=0, title=""):
+def plotintersection(N, radius, k, bigr, smallr, xc=0, yc=0, zc=0, title="", sampling=uniformrandom):
     # store points for each category
     points_sphere_only = []
     points_torus_only = []
     points_intersection = []
 
     for _ in range(N):
-        x, y, z = uniformrandom(radius)
+        x, y, z = sampling(radius)
 
         in_sphere = sphere(x, y, z, k)
         in_torus = torus(x, y, z, bigr, smallr)
@@ -161,6 +161,4 @@ def main():
         smallr=0.5, 
         throws=100)
 
-
 main()
-        
