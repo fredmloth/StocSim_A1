@@ -16,10 +16,9 @@ def sphere(x, y, z, k):
         raise ValueError(f"k needs to be > 0. You got k: {k}")
 
     # Sphere dimensions
-    if x*x + y*y + z*z <= k ** 2:
-        return True
-    
-    return False
+    hits = x*x + y*y + z*z <= k ** 2
+
+    return hits
 
 
 def torus(x, y, z, R, r, xc=0, yc=0, zc=0):
@@ -29,10 +28,10 @@ def torus(x, y, z, R, r, xc=0, yc=0, zc=0):
                          f"You got R: {R} and r: {r}")
 
     # Torus dimensions
-    if (np.sqrt((x - xc)**2 + (y - yc)**2) - R) ** 2 + (z - zc)**2 <= r ** 2:
-        return True
+    hits = (np.sqrt(x*x + y*y) - R) ** 2 + z*z <= r ** 2
+    print("hits:", hits)
     
-    return False
+    return hits
 
 
 def torus_off(x, y, z, xc=0, yc=0, zc=0.1, R=0.75, r=0.4):
@@ -52,40 +51,66 @@ def torus_off(x, y, z, xc=0, yc=0, zc=0.1, R=0.75, r=0.4):
 # --------------
 # Sampling
 # --------------
-def uniformrandom(radius):
-    x, y, z = np.random.uniform(-radius, radius, size=3)
+def uniformrandom(N, seed=None):
+    np.random.seed(seed=seed)
+    x = np.random.rand(N)
+    y = np.random.rand(N)
+    z = np.random.rand(N)
+
+    return np.array([x, y, z])
+
+
+def deterministic_XYZ(N, seed=None):
+    sequence = np.empty((3, N))
+    m = 3.8
+
+    # define a self-contained region
+    b = m * 0.5 * (1 - 0.5)
+    a = m * b * (1 - b)
     
-    return x, y, z
+    # 'seed' the deterministic sequence
+    np.random.seed(seed=seed)
+    sequence[:, 0] = np.random.uniform(a, b, 3)
+    
+    for i in range(1, N):
+        sequence[:, i] = m * sequence[:, i - 1] * (1 - sequence[:, i - 1])
 
-
-def deterministic_sampling():
-    return
+    return sequence 
 
 
 # define random number generator
 
+# --------------
+# Errors
+# --------------
+def error_variance():
+    """Calculates the error based on average volume, sample variance and sample size"""
+    return
 
 # --------------
 # monte carlo
 # --------------
-def montecarlo(radius, k, R, r, throws):
-    hits = 0 # number of hits in intersection
+def montecarlo(prng, radius, k, R, r, throws, plot=False):
+    rand = prng(throws)
+    x, y, z = radius * (np.ones((3, throws)) - 2 * rand)
 
-    for _ in range(throws):
-        x, y, z = uniformrandom(radius)
+    sphereHits = sphere(x, y, z, k)
+    torusHits = torus(x, y, z, R, r)
 
-        if sphere(x, y, z, k) and torus(x, y, z, R, r):
-            hits += 1
+    totalHits = np.sum(np.logical_and(sphereHits, torusHits))
 
     box_volume = (2 * radius) ** 3
-    intersection_volume = box_volume * (hits / throws)
+    intersection_volume = box_volume * (totalHits / throws)
 
-    return intersection_volume, hits
+    if plot == True:
+        plotintersection(x, y, z, sphereHits, torusHits, radius)
+
+    return intersection_volume, totalHits
 
 
 def run_monte_carlo(
         N=100000, 
-        sampling=uniformrandom, 
+        prng=uniformrandom, 
         radius=1.1, 
         k=1, 
         R=0.75, 
@@ -99,7 +124,7 @@ def run_monte_carlo(
     # Time progress bar
     t0 = time.perf_counter()
     for _ in trange(N, desc="Monte Carlo runs", leave=False):
-        intersection_volume, hits = montecarlo(radius, k, R, r, throws)
+        intersection_volume, hits = montecarlo(prng, radius, k, R, r, throws)
         all_volumes.append(intersection_volume)
         all_hits.append(hits)
     t1 = time.perf_counter()
@@ -117,51 +142,28 @@ def run_monte_carlo(
 # --------------
 # Plotting code
 # --------------
-def get_coords(points_list):
-    if not points_list: # check for empty list
-        return np.array([]), np.array([]), np.array([])
-    
-    arr = np.array(points_list)
-    return arr[:, 0], arr[:, 1], arr[:, 2]
-
-
-def plotintersection(N, radius, k, R, r, xc=0, yc=0, zc=0, title="", sampling=uniformrandom):
+def plotintersection(x, y, z, sphereHits, torusHits, radius):
     # store points for each category
-    points_sphere_only = []
-    points_torus_only = []
-    points_intersection = []
-
-    for _ in range(N):
-        x, y, z = sampling(radius)
-
-        in_sphere = sphere(x, y, z, k)
-        in_torus = torus(x, y, z, R, r)
-
-        if in_sphere and in_torus:
-            points_intersection.append((x, y, z))
-        elif in_sphere:
-            points_sphere_only.append((x, y, z))
-        elif in_torus:
-            points_torus_only.append((x, y, z))
+    
+    # Add code
+    intersection = sphereHits & torusHits
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
-    # plotting by category
-    #xs, ys, zs = get_coords(points_sphere_only)
-    #ax.scatter(xs, ys, zs, color='blue', alpha=0.5, s=2, label='Sphere Only')
-    
-    #xt, yt, zt = get_coords(points_torus_only)
-    #ax.scatter(xt, yt, zt, color='green', alpha=0.5, s=2, label='Torus Only')
-    
-    xi, yi, zi = get_coords(points_intersection)
-    ax.scatter(xi, yi, zi, color='red', alpha=0.2, s=5, label='Intersection')
+    # plot intersection
+    ax.scatter(
+        x[intersection],
+        y[intersection],
+        z[intersection],
+        s=6, alpha=0.7, label=f"Intersection ({intersection.sum()})"
+    )
 
     # labels and title
     ax.set_xlabel('X Axis')
     ax.set_ylabel('Y Axis')
     ax.set_zlabel('Z Axis')
-    ax.set_title(title)
+    ax.set_title("Intersection")
     ax.legend()
     
     # set limits for each axis
@@ -171,12 +173,17 @@ def plotintersection(N, radius, k, R, r, xc=0, yc=0, zc=0, title="", sampling=un
 
     plt.show()
 
+# Plot error changes and estimates
 
+
+# --------------
+# Running code
+# --------------
 def main():
     # case a:
     a_sample_variance, a_average_volume = run_monte_carlo(
         N=100000, 
-        sampling=uniformrandom, 
+        prng=uniformrandom, 
         radius=1.1, 
         k=1, 
         R=0.75, 
@@ -195,11 +202,15 @@ def main():
     # case b:
     b_sample_variance, b_average_volume = run_monte_carlo(
         N=10000, 
-        sampling=uniformrandom, 
+        prng=uniformrandom, 
         radius=1.1, 
         k=1, 
         R=0.5, 
         r=0.5, 
         throws=100)
+ 
+    # plot code
+    montecarlo(prng=uniformrandom, radius=1.1, k=1, R=0.75, r=0.4, throws=10000, plot=True)
+    
 
 main()
