@@ -26,7 +26,7 @@ def torus(x, y, z, R, r):
     """Checks if the point is within the torus and passes True if so."""
     if R <= 0 or r <= 0:
         raise ValueError(f"R and r need to be > 0." 
-                         "You got R: {R} and r: {r}")
+                         f"You got R: {R} and r: {r}")
 
     # Torus dimensions
     if (np.sqrt(x*x + y*y) - R) ** 2 + z*z <= r ** 2:
@@ -39,9 +39,7 @@ def torus(x, y, z, R, r):
 # Sampling
 # --------------
 def uniformrandom(radius):
-    x = np.random.uniform(-radius, radius)
-    y = np.random.uniform(-radius, radius)
-    z = np.random.uniform(-radius, radius)
+    x, y, z = np.random.uniform(-radius, radius, size=3)
     
     return x, y, z
 
@@ -59,8 +57,10 @@ def montecarlo(radius, k, R, r, throws):
     for _ in range(throws):
         x, y, z = uniformrandom(radius)
 
-    if sphere(x, y, z, k) and torus(x, y, z, R, r):
-        hits += 1
+        print("x: ", x)
+
+        if sphere(x, y, z, k) and torus(x, y, z, R, r):
+            hits += 1
 
     box_volume = (2 * radius) ** 3
     intersection_volume = box_volume * (hits / throws)
@@ -137,7 +137,6 @@ def plotintersection(N, radius, k, bigr, smallr, xc=0, yc=0, zc=0, title=""):
     ax.scatter(xi, yi, zi, color='red', alpha=0.5, s=5, label='Intersection')
 
     return
-
 
 
 def main():
