@@ -4,9 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-# Define shape of box to sample from
-# case a box from -1 to 1 for all dimensions)
-
 # random nr generator (module or ourselves)
 
 def sphere(x, y, z, k):
@@ -90,7 +87,6 @@ def plotintersection(N, radius, k, bigr, smallr, xc=0, yc=0, zc=0, title=""):
         elif in_torus:
             points_torus_only.append((x, y, z))
 
-
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
@@ -104,7 +100,19 @@ def plotintersection(N, radius, k, bigr, smallr, xc=0, yc=0, zc=0, title=""):
     xi, yi, zi = get_coords(points_intersection)
     ax.scatter(xi, yi, zi, color='red', alpha=0.5, s=5, label='Intersection')
 
-    return
+    # labels and title
+    ax.set_xlabel('X Axis')
+    ax.set_ylabel('Y Axis')
+    ax.set_zlabel('Z Axis')
+    ax.set_title(title)
+    ax.legend()
+    
+    # set limits for each axis
+    ax.set_xlim([-radius, radius])
+    ax.set_ylim([-radius, radius])
+    ax.set_zlim([-radius, radius])
+
+    plt.show()
 
 
 def run_monte_carlo(
