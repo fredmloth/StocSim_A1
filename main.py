@@ -10,9 +10,11 @@ from mpl_toolkits.mplot3d import Axes3D
 # random nr generator (module or ourselves)
 
 def sphere(x, y, z, k):
-    #raise error for k <= 0
+    """Checks if the point is within the sphere and passes True if so."""
+    if k <= 0:
+        raise ValueError(f"k needs to be > 0. You got k: {k}")
 
-    # Check if the values are inside the sphere and return True
+    # Sphere dimensions
     if x*x + y*y + z*z <= k ** 2:
         return True
     
@@ -20,9 +22,12 @@ def sphere(x, y, z, k):
 
 
 def torus(x, y, z, bigR, smallr):
-    #raise error for bigR, smallr <= 0
+    """Checks if the point is within the torus and passes True if so."""
+    if bigR <= 0 or smallr <= 0:
+        raise ValueError(f"bigR and smallr need to be > 0." 
+                         "You got bigR: {bigR} and smallr: {smallr}")
 
-    # Check if values are inside Torus and return True
+    # Torus dimensions
     if (np.sqrt(x*x + y*y) - bigR) ** 2 + z*z <= smallr ** 2:
         return True
     
@@ -48,7 +53,6 @@ def montecarlo(radius, k, bigr, smallr, throws):
 # Uniform random sampling
 def uniformrandom(radius):
     x = np.random.uniform(-radius, radius)
-    print(f"x")
     y = np.random.uniform(-radius, radius)
     z = np.random.uniform(-radius, radius)
     
@@ -103,20 +107,52 @@ def plotintersection(N, radius, k, bigr, smallr, xc=0, yc=0, zc=0, title=""):
     return
 
 
+def run_monte_carlo(
+        N=100000, 
+        sampling=uniformrandom, 
+        radius=1.1, 
+        k=1, 
+        bigr=0.75, 
+        smallr=0.4, 
+        throws=100000):
+    """Runs the monte carlo simulation N times."""
+
+    all_volumes = []
+    all_hits = []
+
+    for _ in range(N):
+        intersection_volume, hits = montecarlo(radius, k, bigr, smallr, throws)
+        all_volumes.append(intersection_volume)
+        all_hits.append(hits)
+
+    sample_variance = np.var(all_volumes)
+    average_volume = np.average(all_volumes)
+    print(f"average_volume: {average_volume}, sample variance: {sample_variance}")
+
+    return sample_variance, average_volume
+
 
 def main():
-    radius = 1.1 # radius of bounding box
-    k = 1
-    bigr = 0.75
-    smallr = 0.4
+    # case a:
+    run_monte_carlo(
+        N=100000, 
+        sampling=uniformrandom, 
+        radius=1.1, 
+        k=1, 
+        bigr=0.75, 
+        smallr=0.4, 
+        throws=100)
 
-    # number of measurements
-    throws = 10
-    montecarlo(radius, k, bigr, smallr, throws)
+    # case b:
+    run_monte_carlo(
+        N=10000, 
+        sampling=uniformrandom, 
+        radius=1.1, 
+        k=1, 
+        bigr=0.5, 
+        smallr=0.5, 
+        throws=100)
+
 
 main()
-
-# do not sample any 3 combinations multiple times
-# error counting
-# plotting intersection
-
+        
