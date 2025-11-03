@@ -21,7 +21,7 @@ def sphere(x, y, z, k):
     return hits
 
 
-def torus(x, y, z, R, r, xc=0, yc=0, zc=0):
+def torus(x, y, z, R, r):
     """Checks if the point is within the torus and passes True if so."""
     if R <= 0 or r <= 0:
         raise ValueError(f"R and r need to be > 0." 
@@ -29,23 +29,8 @@ def torus(x, y, z, R, r, xc=0, yc=0, zc=0):
 
     # Torus dimensions
     hits = (np.sqrt(x*x + y*y) - R) ** 2 + z*z <= r ** 2
-    print("hits:", hits)
     
     return hits
-
-
-def torus_off(x, y, z, xc=0, yc=0, zc=0.1, R=0.75, r=0.4):
-    """Checks if the point is within the off-center torus and passes 
-    True if so."""
-    if R <= 0 or r <= 0:
-        raise ValueError(f"R and r need to be > 0." 
-                         f"You got R: {R} and r: {r}")
-
-    # Off-center Torus dimensions
-    if (np.sqrt((x - xc)**2 + (y - yc)**2) - R)**2 + (z - zc)**2 <= r**2:
-        return True
-    
-    return False
 
 
 # --------------
@@ -90,12 +75,12 @@ def error_variance():
 # --------------
 # monte carlo
 # --------------
-def montecarlo(prng, radius, k, R, r, throws, plot=False):
+def montecarlo(prng, radius, k, R, r, throws, xc=0, yc=0, zc=0, plot=False):
     rand = prng(throws)
     x, y, z = radius * (np.ones((3, throws)) - 2 * rand)
 
     sphereHits = sphere(x, y, z, k)
-    torusHits = torus(x, y, z, R, r)
+    torusHits = torus(x-xc, y-yc, z-zc, R, r)
 
     totalHits = np.sum(np.logical_and(sphereHits, torusHits))
 
@@ -115,7 +100,10 @@ def run_monte_carlo(
         k=1, 
         R=0.75, 
         r=0.4, 
-        throws=100000):
+        throws=100000,
+        xc=0,
+        yc=0,
+        zc=0):
     """Runs the monte carlo simulation N times."""
 
     all_volumes = []
@@ -124,7 +112,7 @@ def run_monte_carlo(
     # Time progress bar
     t0 = time.perf_counter()
     for _ in trange(N, desc="Monte Carlo runs", leave=False):
-        intersection_volume, hits = montecarlo(prng, radius, k, R, r, throws)
+        intersection_volume, hits = montecarlo(prng, radius, k, R, r, throws, xc, yc, zc)
         all_volumes.append(intersection_volume)
         all_hits.append(hits)
     t1 = time.perf_counter()
