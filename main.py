@@ -47,7 +47,6 @@ def montecarlo(radius, k, bigr, smallr, throws):
 # Uniform random sampling
 def uniformrandom(radius):
     x = np.random.uniform(-radius, radius)
-    print(f"x")
     y = np.random.uniform(-radius, radius)
     z = np.random.uniform(-radius, radius)
     
@@ -72,7 +71,30 @@ def main():
     throws = 10
     montecarlo(radius, k, bigr, smallr, throws)
 
-main()
 
 # do not sample any 3 combinations multiple times
 
+def run_monte_carlo(
+        N=1000, 
+        sampling=uniformrandom, 
+        radius=1.1, 
+        k=1, 
+        bigr=0.75, 
+        smallr=0.4, 
+        throws=10):
+    """Runs the monte carlo simulation N times."""
+
+    all_volumes = []
+    all_hits = []
+
+    for _ in range(N):
+        intersection_volume, hits = montecarlo(radius, k, bigr, smallr, throws)
+        all_volumes.append(intersection_volume)
+        all_hits.append(hits)
+
+    sample_variance = np.var(all_volumes)
+    average_volume = np.average(all_volumes)
+    print(f"average_volume: {average_volume}, sample variance: {sample_variance}")
+
+run_monte_carlo()
+        
