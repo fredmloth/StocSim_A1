@@ -82,6 +82,7 @@ def run_monte_carlo(
     all_volumes = []
     all_hits = []
 
+    # Time progress bar
     t0 = time.perf_counter()
     for _ in trange(N, desc="Monte Carlo runs", leave=False):
         intersection_volume, hits = montecarlo(radius, k, R, r, throws)
