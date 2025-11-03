@@ -4,6 +4,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
+import time
+from tqdm import trange
+
 # random nr generator (module or ourselves)
 
 
@@ -57,8 +60,6 @@ def montecarlo(radius, k, R, r, throws):
     for _ in range(throws):
         x, y, z = uniformrandom(radius)
 
-        print("x: ", x)
-
         if sphere(x, y, z, k) and torus(x, y, z, R, r):
             hits += 1
 
@@ -81,14 +82,19 @@ def run_monte_carlo(
     all_volumes = []
     all_hits = []
 
-    for _ in range(N):
+    t0 = time.perf_counter()
+    for _ in trange(N, desc="Monte Carlo runs", leave=False):
         intersection_volume, hits = montecarlo(radius, k, R, r, throws)
         all_volumes.append(intersection_volume)
         all_hits.append(hits)
+    t1 = time.perf_counter()
 
     sample_variance = np.var(all_volumes)
-    average_volume = np.average(all_volumes)
+    average_volume = np.mean(all_volumes)
+
+    elapsed = t1 - t0
     print(f"average_volume: {average_volume}, sample variance: {sample_variance}")
+    print(f"Elapsed: {elapsed:.3f}s  ({elapsed/N:.6f}s per run)")
 
     return sample_variance, average_volume
 
