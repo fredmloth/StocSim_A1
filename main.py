@@ -60,6 +60,9 @@ def deterministic_XYZ(N, seed=None):
     for i in range(1, N):
         sequence[:, i] = m * sequence[:, i - 1] * (1 - sequence[:, i - 1])
 
+    # normalise [a, b] -> [0, 1]
+    sequence = (sequence - a) / (b - a)
+
     return sequence 
 
 
@@ -78,6 +81,8 @@ def standard_error(sample_std, N):
 # --------------
 def montecarlo(prng, radius, k, R, r, throws, xc=0, yc=0, zc=0, plot=False):
     rand = prng(throws)
+
+    # normalise [0, 1] -> [-radius, radius]
     x, y, z = radius * (np.ones((3, throws)) - 2 * rand)
 
     sphereHits = sphere(x, y, z, k)
