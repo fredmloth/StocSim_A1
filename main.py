@@ -1,7 +1,7 @@
 # This module runs the code for assignment 1 of Stochastic Simulation
 
 import numpy as np
-import matplotlib.pyplot as plt
+import matplotlib as plt
 
 # Define shape of box to sample from
 # case a box from -1 to 1 for all dimensions)
@@ -12,7 +12,7 @@ def sphere(x, y, z, k):
     #raise error for k <= 0
 
     # Check if the values are inside the sphere and return True
-    if x*x + y*y + z*z <= k:
+    if x*x + y*y + z*z <= k ** 2:
         return True
     
     return False
@@ -30,20 +30,24 @@ def torus(x, y, z, bigR, smallr):
 
 # Monte carlo integration
 def montecarlo(radius, k, bigr, smallr, throws):
-    intersection = 0
+    hits = 0 # number of hits in intersection
+
     for _ in range(throws):
         x, y, z = uniformrandom(radius)
-        if sphere(x, y, z, k) and torus(x, y, z, bigr, smallr):
-            print(f"intersection at point x:{x}, y:{y}, z:{z}")
-            intersection+=1
 
-    return #volume
+    if sphere(x, y, z, k) and torus(x, y, z, bigr, smallr):
+        hits += 1
+
+    box_volume = (2 * radius) ** 3
+    intersection_volume = box_volume * (hits / throws)
+
+    return intersection_volume, hits
 
 
 # Uniform random sampling
 def uniformrandom(radius):
     x = np.random.uniform(-radius, radius)
-    print(f"x:{x}")
+    print(f"x")
     y = np.random.uniform(-radius, radius)
     z = np.random.uniform(-radius, radius)
     
@@ -53,8 +57,13 @@ def uniformrandom(radius):
 def plotintersection():
     return 
 
+def deterministic_sampling():
+
+    return
+
+
 def main():
-    radius = 1.1
+    radius = 1.1 # radius of bounding box
     k = 1
     bigr = 0.75
     smallr = 0.4
@@ -64,7 +73,6 @@ def main():
     montecarlo(radius, k, bigr, smallr, throws)
 
 main()
-# Sampling function for volume intersection with bounding box? -> check what is bounding box
-# Bounding box: space that encompases both together fully from which we sample 
+
 # do not sample any 3 combinations multiple times
 
