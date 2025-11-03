@@ -68,11 +68,10 @@ def deterministic_XYZ(N, seed=None):
 # --------------
 # Errors
 # --------------
-def error_variance():
-    """Calculates the error based on average volume, sample variance and sample size
-    computed volume * sample variance/ sqrt(sample size)"""
+def standard_error(sample_std, N):
+    """Calculates the standard error of the mean."""
+    return sample_std / np.sqrt(N)
 
-    return
 
 # --------------
 # monte carlo
