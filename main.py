@@ -35,6 +35,20 @@ def torus(x, y, z, R, r, xc=0, yc=0, zc=0):
     return False
 
 
+def torus_off(x, y, z, R, r):
+    """Checks if the point is within the off-center torus and passes 
+    True if so."""
+    if R <= 0 or r <= 0:
+        raise ValueError(f"R and r need to be > 0." 
+                         f"You got R: {R} and r: {r}")
+
+    # Torus dimensions
+    if (np.sqrt(x*x + y*y) - R) ** 2 + z*z <= r ** 2:
+        return True
+    
+    return False
+
+
 # --------------
 # Sampling
 # --------------
@@ -94,6 +108,7 @@ def run_monte_carlo(
     average_volume = np.mean(all_volumes)
 
     elapsed = t1 - t0
+    print(f"for radius={radius}, k={k}, R={R}, r={r}, and throws={throws}, we get:")
     print(f"average_volume: {average_volume}, sample variance: {sample_variance}")
     print(f"Elapsed: {elapsed:.3f}s  ({elapsed/N:.6f}s per run)")
 
@@ -159,7 +174,7 @@ def plotintersection(N, radius, k, bigr, smallr, xc=0, yc=0, zc=0, title="", sam
 
 def main():
     # case a:
-    run_monte_carlo(
+    a_sample_variance, a_average_volume = run_monte_carlo(
         N=100000, 
         sampling=uniformrandom, 
         radius=1.1, 
@@ -169,7 +184,7 @@ def main():
         throws=100)
 
     # case b:
-    run_monte_carlo(
+    b_sample_variance, b_average_volume = run_monte_carlo(
         N=10000, 
         sampling=uniformrandom, 
         radius=1.1, 
