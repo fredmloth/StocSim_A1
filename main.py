@@ -69,7 +69,9 @@ def deterministic_XYZ(N, seed=None):
 # Errors
 # --------------
 def error_variance():
-    """Calculates the error based on average volume, sample variance and sample size"""
+    """Calculates the error based on average volume, sample variance and sample size
+    computed volume * sample variance/ sqrt(sample size)"""
+
     return
 
 # --------------
@@ -117,15 +119,15 @@ def run_monte_carlo(
         all_hits.append(hits)
     t1 = time.perf_counter()
 
-    sample_variance = np.var(all_volumes)
+    sample_std = np.std(all_volumes)
     average_volume = np.mean(all_volumes)
 
     elapsed = t1 - t0
     print(f"for radius={radius}, k={k}, R={R}, r={r}, and throws={throws}, we get:")
-    print(f"average_volume: {average_volume}, sample variance: {sample_variance}")
+    print(f"average_volume: {average_volume}, sample variance: {sample_std}")
     print(f"Elapsed: {elapsed:.3f}s  ({elapsed/N:.6f}s per run)")
 
-    return sample_variance, average_volume
+    return sample_std, average_volume
 
 # --------------
 # Plotting code
@@ -169,7 +171,7 @@ def plotintersection(x, y, z, sphereHits, torusHits, radius):
 # --------------
 def main():
     # case a:
-    a_sample_variance, a_average_volume = run_monte_carlo(
+    a_sample_std, a_average_volume = run_monte_carlo(
         N=100000, 
         prng=uniformrandom, 
         radius=1.1, 
@@ -188,7 +190,7 @@ def main():
         )
 
     # case b:
-    b_sample_variance, b_average_volume = run_monte_carlo(
+    b_sample_std, b_average_volume = run_monte_carlo(
         N=10000, 
         prng=uniformrandom, 
         radius=1.1, 
