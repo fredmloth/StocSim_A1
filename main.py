@@ -35,15 +35,15 @@ def torus(x, y, z, R, r, xc=0, yc=0, zc=0):
     return False
 
 
-def torus_off(x, y, z, R, r):
+def torus_off(x, y, z, xc=0, yc=0, zc=0.1, R=0.75, r=0.4):
     """Checks if the point is within the off-center torus and passes 
     True if so."""
     if R <= 0 or r <= 0:
         raise ValueError(f"R and r need to be > 0." 
                          f"You got R: {R} and r: {r}")
 
-    # Torus dimensions
-    if (np.sqrt(x*x + y*y) - R) ** 2 + z*z <= r ** 2:
+    # Off-center Torus dimensions
+    if (np.sqrt((x - xc)**2 + (y - yc)**2) - R)**2 + (z - zc)**2 <= r**2:
         return True
     
     return False
