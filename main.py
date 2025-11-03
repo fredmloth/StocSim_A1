@@ -110,7 +110,7 @@ def get_coords(points_list):
     return arr[:, 0], arr[:, 1], arr[:, 2]
 
 
-def plotintersection(N, radius, k, bigr, smallr, xc=0, yc=0, zc=0, title="", sampling=uniformrandom):
+def plotintersection(N, radius, k, R, r, xc=0, yc=0, zc=0, title="", sampling=uniformrandom):
     # store points for each category
     points_sphere_only = []
     points_torus_only = []
@@ -120,7 +120,7 @@ def plotintersection(N, radius, k, bigr, smallr, xc=0, yc=0, zc=0, title="", sam
         x, y, z = sampling(radius)
 
         in_sphere = sphere(x, y, z, k)
-        in_torus = torus(x, y, z, bigr, smallr)
+        in_torus = torus(x, y, z, R, r)
 
         if in_sphere and in_torus:
             points_intersection.append((x, y, z))
@@ -133,14 +133,14 @@ def plotintersection(N, radius, k, bigr, smallr, xc=0, yc=0, zc=0, title="", sam
     ax = fig.add_subplot(111, projection='3d')
 
     # plotting by category
-    xs, ys, zs = get_coords(points_sphere_only)
-    ax.scatter(xs, ys, zs, color='blue', alpha=0.1, s=2, label='Sphere Only')
+    #xs, ys, zs = get_coords(points_sphere_only)
+    #ax.scatter(xs, ys, zs, color='blue', alpha=0.5, s=2, label='Sphere Only')
     
-    xt, yt, zt = get_coords(points_torus_only)
-    ax.scatter(xt, yt, zt, color='green', alpha=0.1, s=2, label='Torus Only')
+    #xt, yt, zt = get_coords(points_torus_only)
+    #ax.scatter(xt, yt, zt, color='green', alpha=0.5, s=2, label='Torus Only')
     
     xi, yi, zi = get_coords(points_intersection)
-    ax.scatter(xi, yi, zi, color='red', alpha=0.5, s=5, label='Intersection')
+    ax.scatter(xi, yi, zi, color='red', alpha=0.2, s=5, label='Intersection')
 
     # labels and title
     ax.set_xlabel('X Axis')
@@ -167,6 +167,15 @@ def main():
         R=0.75, 
         r=0.4, 
         throws=100)
+    
+    plotintersection(
+        N=100000, 
+        sampling=uniformrandom, 
+        radius=1.1, 
+        k=1, 
+        R=0.75, 
+        r=0.4
+        )
 
     # case b:
     run_monte_carlo(
