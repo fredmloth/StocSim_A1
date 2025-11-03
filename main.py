@@ -4,8 +4,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
+import time
+from tqdm import trange
+
 # random nr generator (module or ourselves)
 
+
+# --------------
+# Volume dimensions
+# --------------
 def sphere(x, y, z, k):
     """Checks if the point is within the sphere and passes True if so."""
     if k <= 0:
@@ -18,40 +25,24 @@ def sphere(x, y, z, k):
     return False
 
 
-def torus(x, y, z, bigR, smallr):
+def torus(x, y, z, R, r):
     """Checks if the point is within the torus and passes True if so."""
-    if bigR <= 0 or smallr <= 0:
-        raise ValueError(f"bigR and smallr need to be > 0." 
-                         "You got bigR: {bigR} and smallr: {smallr}")
+    if R <= 0 or r <= 0:
+        raise ValueError(f"R and r need to be > 0." 
+                         f"You got R: {R} and r: {r}")
 
     # Torus dimensions
-    if (np.sqrt(x*x + y*y) - bigR) ** 2 + z*z <= smallr ** 2:
+    if (np.sqrt(x*x + y*y) - R) ** 2 + z*z <= r ** 2:
         return True
     
     return False
 
 
-# Monte carlo integration
-def montecarlo(radius, k, bigr, smallr, throws):
-    hits = 0 # number of hits in intersection
-
-    for _ in range(throws):
-        x, y, z = uniformrandom(radius)
-
-    if sphere(x, y, z, k) and torus(x, y, z, bigr, smallr):
-        hits += 1
-
-    box_volume = (2 * radius) ** 3
-    intersection_volume = box_volume * (hits / throws)
-
-    return intersection_volume, hits
-
-
-# Uniform random sampling
+# --------------
+# Sampling
+# --------------
 def uniformrandom(radius):
-    x = np.random.uniform(-radius, radius)
-    y = np.random.uniform(-radius, radius)
-    z = np.random.uniform(-radius, radius)
+    x, y, z = np.random.uniform(-radius, radius, size=3)
     
     return x, y, z
 
@@ -60,6 +51,57 @@ def deterministic_sampling():
     return
 
 
+# --------------
+# monte carlo
+# --------------
+def montecarlo(radius, k, R, r, throws):
+    hits = 0 # number of hits in intersection
+
+    for _ in range(throws):
+        x, y, z = uniformrandom(radius)
+
+        if sphere(x, y, z, k) and torus(x, y, z, R, r):
+            hits += 1
+
+    box_volume = (2 * radius) ** 3
+    intersection_volume = box_volume * (hits / throws)
+
+    return intersection_volume, hits
+
+
+def run_monte_carlo(
+        N=100000, 
+        sampling=uniformrandom, 
+        radius=1.1, 
+        k=1, 
+        R=0.75, 
+        r=0.4, 
+        throws=100000):
+    """Runs the monte carlo simulation N times."""
+
+    all_volumes = []
+    all_hits = []
+
+    # Time progress bar
+    t0 = time.perf_counter()
+    for _ in trange(N, desc="Monte Carlo runs", leave=False):
+        intersection_volume, hits = montecarlo(radius, k, R, r, throws)
+        all_volumes.append(intersection_volume)
+        all_hits.append(hits)
+    t1 = time.perf_counter()
+
+    sample_variance = np.var(all_volumes)
+    average_volume = np.mean(all_volumes)
+
+    elapsed = t1 - t0
+    print(f"average_volume: {average_volume}, sample variance: {sample_variance}")
+    print(f"Elapsed: {elapsed:.3f}s  ({elapsed/N:.6f}s per run)")
+
+    return sample_variance, average_volume
+
+# --------------
+# Plotting code
+# --------------
 def get_coords(points_list):
     if not points_list: # check for empty list
         return np.array([]), np.array([]), np.array([])
@@ -115,31 +157,6 @@ def plotintersection(N, radius, k, bigr, smallr, xc=0, yc=0, zc=0, title="", sam
     plt.show()
 
 
-def run_monte_carlo(
-        N=100000, 
-        sampling=uniformrandom, 
-        radius=1.1, 
-        k=1, 
-        bigr=0.75, 
-        smallr=0.4, 
-        throws=100000):
-    """Runs the monte carlo simulation N times."""
-
-    all_volumes = []
-    all_hits = []
-
-    for _ in range(N):
-        intersection_volume, hits = montecarlo(radius, k, bigr, smallr, throws)
-        all_volumes.append(intersection_volume)
-        all_hits.append(hits)
-
-    sample_variance = np.var(all_volumes)
-    average_volume = np.average(all_volumes)
-    print(f"average_volume: {average_volume}, sample variance: {sample_variance}")
-
-    return sample_variance, average_volume
-
-
 def main():
     # case a:
     run_monte_carlo(
@@ -147,8 +164,8 @@ def main():
         sampling=uniformrandom, 
         radius=1.1, 
         k=1, 
-        bigr=0.75, 
-        smallr=0.4, 
+        R=0.75, 
+        r=0.4, 
         throws=100)
 
     # case b:
@@ -157,8 +174,8 @@ def main():
         sampling=uniformrandom, 
         radius=1.1, 
         k=1, 
-        bigr=0.5, 
-        smallr=0.5, 
+        R=0.5, 
+        r=0.5, 
         throws=100)
 
 main()
