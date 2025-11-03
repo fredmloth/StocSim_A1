@@ -6,6 +6,10 @@ from mpl_toolkits.mplot3d import Axes3D
 
 # random nr generator (module or ourselves)
 
+
+# --------------
+# Volume dimensions
+# --------------
 def sphere(x, y, z, k):
     """Checks if the point is within the sphere and passes True if so."""
     if k <= 0:
@@ -31,7 +35,24 @@ def torus(x, y, z, R, r):
     return False
 
 
-# Monte carlo integration
+# --------------
+# Sampling
+# --------------
+def uniformrandom(radius):
+    x = np.random.uniform(-radius, radius)
+    y = np.random.uniform(-radius, radius)
+    z = np.random.uniform(-radius, radius)
+    
+    return x, y, z
+
+
+def deterministic_sampling():
+    return
+
+
+# --------------
+# monte carlo
+# --------------
 def montecarlo(radius, k, R, r, throws):
     hits = 0 # number of hits in intersection
 
@@ -47,19 +68,33 @@ def montecarlo(radius, k, R, r, throws):
     return intersection_volume, hits
 
 
-# Uniform random sampling
-def uniformrandom(radius):
-    x = np.random.uniform(-radius, radius)
-    y = np.random.uniform(-radius, radius)
-    z = np.random.uniform(-radius, radius)
-    
-    return x, y, z
+def run_monte_carlo(
+        N=100000, 
+        sampling=uniformrandom, 
+        radius=1.1, 
+        k=1, 
+        R=0.75, 
+        r=0.4, 
+        throws=100000):
+    """Runs the monte carlo simulation N times."""
 
+    all_volumes = []
+    all_hits = []
 
-def deterministic_sampling():
-    return
+    for _ in range(N):
+        intersection_volume, hits = montecarlo(radius, k, R, r, throws)
+        all_volumes.append(intersection_volume)
+        all_hits.append(hits)
 
+    sample_variance = np.var(all_volumes)
+    average_volume = np.average(all_volumes)
+    print(f"average_volume: {average_volume}, sample variance: {sample_variance}")
 
+    return sample_variance, average_volume
+
+# --------------
+# Plotting code
+# --------------
 def get_coords(points_list):
     if not points_list: # check for empty list
         return np.array([]), np.array([]), np.array([])
@@ -103,30 +138,6 @@ def plotintersection(N, radius, k, bigr, smallr, xc=0, yc=0, zc=0, title=""):
 
     return
 
-
-def run_monte_carlo(
-        N=100000, 
-        sampling=uniformrandom, 
-        radius=1.1, 
-        k=1, 
-        R=0.75, 
-        r=0.4, 
-        throws=100000):
-    """Runs the monte carlo simulation N times."""
-
-    all_volumes = []
-    all_hits = []
-
-    for _ in range(N):
-        intersection_volume, hits = montecarlo(radius, k, R, r, throws)
-        all_volumes.append(intersection_volume)
-        all_hits.append(hits)
-
-    sample_variance = np.var(all_volumes)
-    average_volume = np.average(all_volumes)
-    print(f"average_volume: {average_volume}, sample variance: {sample_variance}")
-
-    return sample_variance, average_volume
 
 
 def main():
