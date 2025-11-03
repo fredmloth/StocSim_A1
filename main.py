@@ -4,9 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-# Define shape of box to sample from
-# case a box from -1 to 1 for all dimensions)
-
 # random nr generator (module or ourselves)
 
 def sphere(x, y, z, k):
@@ -21,27 +18,27 @@ def sphere(x, y, z, k):
     return False
 
 
-def torus(x, y, z, bigR, smallr):
+def torus(x, y, z, R, r):
     """Checks if the point is within the torus and passes True if so."""
-    if bigR <= 0 or smallr <= 0:
-        raise ValueError(f"bigR and smallr need to be > 0." 
-                         "You got bigR: {bigR} and smallr: {smallr}")
+    if R <= 0 or r <= 0:
+        raise ValueError(f"R and r need to be > 0." 
+                         "You got R: {R} and r: {r}")
 
     # Torus dimensions
-    if (np.sqrt(x*x + y*y) - bigR) ** 2 + z*z <= smallr ** 2:
+    if (np.sqrt(x*x + y*y) - R) ** 2 + z*z <= r ** 2:
         return True
     
     return False
 
 
 # Monte carlo integration
-def montecarlo(radius, k, bigr, smallr, throws):
+def montecarlo(radius, k, R, r, throws):
     hits = 0 # number of hits in intersection
 
     for _ in range(throws):
         x, y, z = uniformrandom(radius)
 
-    if sphere(x, y, z, k) and torus(x, y, z, bigr, smallr):
+    if sphere(x, y, z, k) and torus(x, y, z, R, r):
         hits += 1
 
     box_volume = (2 * radius) ** 3
@@ -112,8 +109,8 @@ def run_monte_carlo(
         sampling=uniformrandom, 
         radius=1.1, 
         k=1, 
-        bigr=0.75, 
-        smallr=0.4, 
+        R=0.75, 
+        r=0.4, 
         throws=100000):
     """Runs the monte carlo simulation N times."""
 
@@ -121,7 +118,7 @@ def run_monte_carlo(
     all_hits = []
 
     for _ in range(N):
-        intersection_volume, hits = montecarlo(radius, k, bigr, smallr, throws)
+        intersection_volume, hits = montecarlo(radius, k, R, r, throws)
         all_volumes.append(intersection_volume)
         all_hits.append(hits)
 
@@ -139,8 +136,8 @@ def main():
         sampling=uniformrandom, 
         radius=1.1, 
         k=1, 
-        bigr=0.75, 
-        smallr=0.4, 
+        R=0.75, 
+        r=0.4, 
         throws=100)
 
     # case b:
@@ -149,8 +146,8 @@ def main():
         sampling=uniformrandom, 
         radius=1.1, 
         k=1, 
-        bigr=0.5, 
-        smallr=0.5, 
+        R=0.5, 
+        r=0.5, 
         throws=100)
 
 
