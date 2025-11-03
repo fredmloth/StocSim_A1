@@ -22,14 +22,14 @@ def sphere(x, y, z, k):
     return False
 
 
-def torus(x, y, z, R, r):
+def torus(x, y, z, R, r, xc=0, yc=0, zc=0):
     """Checks if the point is within the torus and passes True if so."""
     if R <= 0 or r <= 0:
         raise ValueError(f"R and r need to be > 0." 
                          f"You got R: {R} and r: {r}")
 
     # Torus dimensions
-    if (np.sqrt(x*x + y*y) - R) ** 2 + z*z <= r ** 2:
+    if (np.sqrt((x - xc)**2 + (y - yc)**2) - R) ** 2 + (z - zc)**2 <= r ** 2:
         return True
     
     return False
