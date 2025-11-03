@@ -7,9 +7,6 @@ from mpl_toolkits.mplot3d import Axes3D
 import time
 from tqdm import trange
 
-# random nr generator (module or ourselves)
-
-
 # --------------
 # Volume dimensions
 # --------------
@@ -49,6 +46,9 @@ def uniformrandom(radius):
 
 def deterministic_sampling():
     return
+
+
+# define random number generator
 
 
 # --------------
