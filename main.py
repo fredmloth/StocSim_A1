@@ -9,9 +9,11 @@ import matplotlib as plt
 # random nr generator (module or ourselves)
 
 def sphere(x, y, z, k):
-    #raise error for k <= 0
+    """Checks if the point is within the sphere and passes True if so."""
+    if k <= 0:
+        raise ValueError(f"k needs to be > 0. You got k: {k}")
 
-    # Check if the values are inside the sphere and return True
+    # Sphere dimensions
     if x*x + y*y + z*z <= k ** 2:
         return True
     
@@ -19,9 +21,12 @@ def sphere(x, y, z, k):
 
 
 def torus(x, y, z, bigR, smallr):
-    #raise error for bigR, smallr <= 0
+    """Checks if the point is within the torus and passes True if so."""
+    if bigR <= 0 or smallr <= 0:
+        raise ValueError(f"bigR and smallr need to be > 0." 
+                         "You got bigR: {bigR} and smallr: {smallr}")
 
-    # Check if values are inside Torus and return True
+    # Torus dimensions
     if (np.sqrt(x*x + y*y) - bigR) ** 2 + z*z <= smallr ** 2:
         return True
     
@@ -61,27 +66,14 @@ def deterministic_sampling():
     return
 
 
-def main():
-    radius = 1.1 # radius of bounding box
-    k = 1
-    bigr = 0.75
-    smallr = 0.4
-
-    # number of measurements
-    throws = 10
-    montecarlo(radius, k, bigr, smallr, throws)
-
-
-# do not sample any 3 combinations multiple times
-
 def run_monte_carlo(
-        N=1000, 
+        N=100000, 
         sampling=uniformrandom, 
         radius=1.1, 
         k=1, 
         bigr=0.75, 
         smallr=0.4, 
-        throws=10):
+        throws=100000):
     """Runs the monte carlo simulation N times."""
 
     all_volumes = []
@@ -96,5 +88,30 @@ def run_monte_carlo(
     average_volume = np.average(all_volumes)
     print(f"average_volume: {average_volume}, sample variance: {sample_variance}")
 
-run_monte_carlo()
+    return sample_variance, average_volume
+
+
+def main():
+    # case a:
+    run_monte_carlo(
+        N=100000, 
+        sampling=uniformrandom, 
+        radius=1.1, 
+        k=1, 
+        bigr=0.75, 
+        smallr=0.4, 
+        throws=100)
+
+    # case b:
+    run_monte_carlo(
+        N=10000, 
+        sampling=uniformrandom, 
+        radius=1.1, 
+        k=1, 
+        bigr=0.5, 
+        smallr=0.5, 
+        throws=100)
+
+
+main()
         
