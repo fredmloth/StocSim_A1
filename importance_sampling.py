@@ -291,10 +291,9 @@ def main():
         xc=0,
         yc=0,
         zc=0.1)
-    
 
     # importance sampling (once)
-    print("Starting importance sampling ...")
+    print("Starting importance sampling (once) ...")
     mc_importance(
         prng=uniformrandom, 
         b1_r=1.1, 
@@ -309,6 +308,7 @@ def main():
         p=0.6)
     
     # Importance sampling (multiple)
+    print("Starting importance sampling (multiple) ...")
     is_sample_std, is_average_volume = run_monte_carlo(
         mc=mc_importance,
         N=100000, 
