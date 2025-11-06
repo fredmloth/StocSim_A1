@@ -93,21 +93,58 @@ def montecarlo(prng, radius, k, R, r, throws, xc=0, yc=0, zc=0, plot=False):
 
     return intersection_volume, totalHits
 
-def montecarlo_importance(prng, b1_r, p, w, k, R, r, throws, xc=0, yc=0, zc=0, plot=False):
+def montecarlo_importance(prng, b1_r, p, R, r, throws, xc=0, yc=0, zc=0.1, plot=False):
     """b1_r : radius of box 1
-    b2_r: radius of box 2
-    b2_h : height of box 2
     p : sampling probability inside box 1
     w: weight for importance sampling
     """
-    # radius of small box
-    box2_r = R+R
+    # box 1 (half)
+    box1_x = box1_y = box1_z = b1_r
+    
+    # radius and height of small box (half)
+    box2_x = box2_z = R+r
+    box2_y = r
 
-    # height of small box
-    box2_h = r*2
+    # create mask to determine where to sample (True = sample from box 1)
+    rng = np.random.default_rng()
+    choose1 = rng.random(throws) <= p
 
-    return intersection_volume, totalHits
+    # create x, y and z grid of dimension throws
+    rx, ry, rz = prng(throws)
 
+    # Define outsides of box
+    xx = np.where(choose1, box1_x, box2_x)
+    yy = np.where(choose1, box1_y, box2_y)
+    zz = np.where(choose1, box1_z, box2_z)
+
+    # define centers
+    xc = np.where(choose1, 0, xc)
+    yc = np.where(choose1, 0, yc)
+    zc = np.where(choose1, 0, zc)
+
+    x = xc + (2*xx)*(rx - 0.5)
+    y = yc + (2*yy)*(ry - 0.5)
+    z = zc + (2*zz)*(rz - 0.5)
+
+    
+
+    # if True in choose1: sample from box 1 so for every choose1 where true, 
+    # the corresponding position in x, y and z is from a position in box 1
+
+    # If false then for box 2
+
+
+    # do this for all throws so that you create a list of all sampling points:
+        # sample randomly from 0 to 1, if sample < p then take sample in box 1
+        # otherwise take sample from box 2.create mask for each point True is value from box 1
+        # False is value from box 2. 
+
+    # test if sample points are an intersection of the sphere and torus
+    # weight the sampled points accordingly to the mask that tells you 
+    # where the point is sampled from and apply the correct weight.
+
+
+    return 
 
 def run_monte_carlo(
         N=100000, 
@@ -208,4 +245,16 @@ def main():
     montecarlo(prng=uniformrandom, radius=1.1, k=1, R=0.75, r=0.4, throws=10000, plot=True)
     
 
-main()
+#main()
+
+montecarlo_importance(
+    prng=uniformrandom, 
+    b1_r=1.1, 
+    p=0.6, 
+    R=0.75, 
+    r=0.4, 
+    throws=10, 
+    xc=0, 
+    yc=0, 
+    zc=0.1, 
+    plot=False)
