@@ -104,21 +104,16 @@ def montecarlo(prng, k=1, R=0.75, r=0.4, throws=100000,
         x = np.empty(throws)
         y = np.empty(throws)
         z = np.empty(throws)
-        
-        for i in range(throws):
-            if from_b[i]:
-                # if True: picking points from B box
-                # mapping our prng values from [0,1] -> [-b_radius, b_radius]
-                x[i] = b_radius * (1 - 2 * randnum_b[0, i])
-                y[i] = b_radius * (1 - 2 * randnum_b[1, i])
-                z[i] = b_radius * (1 - 2 * randnum_b[2, i])
-                
-            else:
-                # if False: picking points from S box
-                # mapping our prng values from [0,1] -> [-s_radius, s_radius] around S_center
-                x[i] = s_radius * (1 - 2 * randnum_s[0, i]) + s_center[0] 
-                y[i] = s_radius * (1 - 2 * randnum_s[1, i]) + s_center[1] 
-                z[i] = s_radius * (1 - 2 * randnum_s[2, i]) + s_center[2]
+
+        # normalise [0, 1] -> [-b_radius, b_radius]
+        x[from_b] = b_radius * (1 - 2 * randnum_b[0, from_b])
+        y[from_b] = b_radius * (1 - 2 * randnum_b[1, from_b])
+        z[from_b] = b_radius * (1 - 2 * randnum_b[2, from_b])
+
+        # normalise [0, 1] -> [-s_radius, s_radius]
+        x[~from_b] = b_radius * (1 - 2 * randnum_s[0, ~from_b])
+        y[~from_b] = b_radius * (1 - 2 * randnum_s[1, ~from_b])
+        z[~from_b] = b_radius * (1 - 2 * randnum_s[2, ~from_b])
 
 
     # check hits
@@ -162,7 +157,7 @@ def run_monte_carlo(
             prng, k, R, r, throws, 
             xc, yc, zc,
             plot=False,
-            mode='uniform',
+            mode=mode,
             p_b=p_b,
             b_radius=b_radius,
             s_radius=s_radius
@@ -347,7 +342,7 @@ def test_q3b():
     p_values = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
     s_radii = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
     
-    n_repeats = 10000
+    n_repeats = 500
 
     results_avg_volume = np.empty((len(s_radii), len(p_values)))
     results_std_dev = np.empty((len(s_radii), len(p_values)))
@@ -375,5 +370,5 @@ def test_q3b():
     
     line_plots(results_avg_volume, results_std_dev, p_values, s_radii)
 
-test_q3b()
 # main()
+test_q3b()
