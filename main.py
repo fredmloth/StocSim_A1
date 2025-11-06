@@ -344,10 +344,10 @@ def test_q3b():
     k_3, R_3, r_3 = 1.0, 0.75, 0.4
     xc_3, yc_3, zc_3 = 0, 0, 0.1
  
-    p_values = np.array([0.1, 0.3, 0.5, 0.7, 0.9, 1.0])
-    s_radii = np.array([0.1, 0.25, 0.5, 1.0])
+    p_values = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
+    s_radii = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
     
-    n_repeats = 100
+    n_repeats = 10000
 
     results_avg_volume = np.empty((len(s_radii), len(p_values)))
     results_std_dev = np.empty((len(s_radii), len(p_values)))
@@ -359,7 +359,7 @@ def test_q3b():
 
             std_dev, avg_vol = run_monte_carlo(
                 N=n_repeats,
-                prng=deterministic_XYZ,
+                prng=uniformrandom,
                 k=k_3, R=R_3, r=r_3,
                 throws=n_throws,
                 xc=xc_3, yc=yc_3, zc=zc_3,
