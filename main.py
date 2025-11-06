@@ -79,22 +79,60 @@ def standard_error(sample_std, N):
 # --------------
 # monte carlo
 # --------------
-def montecarlo(prng, radius, k, R, r, throws, xc=0, yc=0, zc=0, plot=False):
-    rand = prng(throws)
+def montecarlo(prng, b_radius=1.1, k=1, R=0.75, r=0.4, throws=100000, 
+               xc=0, yc=0, zc=0, 
+               plot=False,
+               mode='uniform',
+               p_b=0.5,
+               s_radius=0.4):   # 'uniform' for Q1&Q3a, 'mixture' for Q3b
 
-    # normalise [0, 1] -> [-radius, radius]
-    x, y, z = radius * (np.ones((3, throws)) - 2 * rand)
+    if mode == 'uniform':
+        rand = prng(throws)
+        # normalise [0, 1] -> [-radius, radius]
+        x, y, z = b_radius * (np.ones((3, throws)) - 2 * rand)
 
+    elif mode == 'mixture':
+        randnum_b = prng(throws)
+        randnum_s = prng(throws)
+        
+        from_b = np.random.rand(throws) < p_b # boolean array, True = from B box, False = from S box
+        
+        s_center = np.array([xc, yc, zc])
+
+        # empty arrays to hold the random points from each box
+        x = np.empty(throws)
+        y = np.empty(throws)
+        z = np.empty(throws)
+        
+        for i in range(throws):
+            if from_b[i]:
+                # if True: picking points from B box
+                # mapping our prng values from [0,1] -> [-b_radius, b_radius]
+                x[i] = b_radius * (1 - 2 * randnum_b[0, i])
+                y[i] = b_radius * (1 - 2 * randnum_b[1, i])
+                z[i] = b_radius * (1 - 2 * randnum_b[2, i])
+                
+            else:
+                # if False: picking points from S box
+                # mapping our prng values from [0,1] -> [-s_radius, s_radius] around S_center
+                x[i] = s_radius * (1 - 2 * randnum_s[0, i]) + s_center[0] 
+                y[i] = s_radius * (1 - 2 * randnum_s[1, i]) + s_center[1] 
+                z[i] = s_radius * (1 - 2 * randnum_s[2, i]) + s_center[2]
+
+    
+    # check hits
     sphereHits = sphere(x, y, z, k)
     torusHits = torus(x-xc, y-yc, z-zc, R, r)
 
     totalHits = np.sum(sphereHits & torusHits)
 
-    box_volume = (2 * radius) ** 3
+    # calculate intersection volume
+    box_volume = (2 * b_radius) ** 3
     intersection_volume = box_volume * (totalHits / throws)
 
+    # plotting
     if plot == True:
-        plotintersection(x, y, z, sphereHits, torusHits, radius)
+        plotintersection(x, y, z, sphereHits, torusHits, b_radius)
 
     return intersection_volume, totalHits
 
@@ -214,7 +252,6 @@ def convergencePlot(N, radius, k, R, r, maxThrows, throwsSamples):
         
 
 
-
 # --------------
 # Running code
 # --------------
@@ -242,7 +279,7 @@ def main():
  
     # plot case a
     montecarlo(prng=uniformrandom, 
-               radius=1.1, 
+               b_radius=1.1, 
                k=1, 
                R=0.75, 
                r=0.4, 
