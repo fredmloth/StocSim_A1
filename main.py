@@ -259,12 +259,43 @@ def convergencePlot(N, radius, k, R, r, maxThrows, throwsSamples):
     plt.show()
 
     return
-        
 
+def line_plots(results_volume, results_error, p_values, s_radii):
+    plt.figure(figsize=(14, 6))
+
+    # plot 1: biased estimated volume
+    plt.subplot(1, 2, 1)
+    
+    for i, s_rad in enumerate(s_radii):
+        plt.plot(p_values, results_volume[i, :], 'o-', label=f's_radius = {s_rad:.2f}')
+    
+    plt.xlabel("probability from box B)")
+    plt.ylabel("estimated Volume (biased)")
+    plt.title("volume vs. p_b (grouped by s_radius)")
+    plt.legend()
+    plt.grid(True)
+
+    # plot 2: std dev error
+    # We can use this to find the best (p_b, s_radius) combination.
+    plt.subplot(1, 2, 2)
+    
+    for i, s_rad in enumerate(s_radii):
+        plt.plot(p_values, results_error[i, :], 'o-', label=f's_radius = {s_rad:.2f}')
+    
+    plt.xlabel("Probability p_b (from Box 'B')")
+    plt.ylabel("Sample Std. Dev. (Error)")
+    plt.title("Error vs. p_b (Grouped by s_radius)")
+    plt.legend()
+    plt.grid(True)
+    
+    plt.suptitle("Q3b Mixture Proposal Analysis (Line Plots)")
+    plt.tight_layout()
+    plt.show()
 
 # --------------
 # Running code
 # --------------
+
 def main():
     # case a:
 
@@ -308,47 +339,41 @@ def main():
 
 def test_q3b():
     n_throws = int(1e5)
-    b_radius = 1.1       
-
+    b_radius = 1.1         
+    
     k_3, R_3, r_3 = 1.0, 0.75, 0.4
     xc_3, yc_3, zc_3 = 0, 0, 0.1
+ 
+    p_values = np.array([0.1, 0.3, 0.5, 0.7, 0.9, 1.0])
+    s_radii = np.array([0.1, 0.25, 0.5, 1.0])
+    
+    n_repeats = 100
 
-    s_radius = 0.25
+    results_avg_volume = np.empty((len(s_radii), len(p_values)))
+    results_std_dev = np.empty((len(s_radii), len(p_values)))
     
-    p_values = np.linspace(0.1, 1.0, 10) 
-    
-    results_avg_volume = []
-    results_std_dev = []
-    
-    print(f"s_radius for test: {s_radius}") # fixed for now, please change if needed
-    print(f"throws per run: {n_throws}")
-    
-    for p in p_values:
-        std_dev, avg_vol = run_monte_carlo(
-            N=10, 
-            prng=uniformrandom,
-            k=k_3, R=R_3, r=r_3,
-            throws=n_throws,
-            xc=xc_3, yc=yc_3, zc=zc_3,
-            mode='mixture',
-            p_b=p,
-            b_radius=b_radius,
-            s_radius=s_radius
-        )
-        results_avg_volume.append(avg_vol)
-        results_std_dev.append(std_dev)
+    for i, s_rad in enumerate(s_radii):
+        for j, p in enumerate(p_values):
+            
+            print(f"    > testing s_rad={s_rad:.2f}, p_b={p:.1f} ...")
 
-    # plotting
-    plt.figure(figsize=(8, 5))
+            std_dev, avg_vol = run_monte_carlo(
+                N=n_repeats,
+                prng=deterministic_XYZ,
+                k=k_3, R=R_3, r=r_3,
+                throws=n_throws,
+                xc=xc_3, yc=yc_3, zc=zc_3,
+                mode='mixture',
+                p_b=p,
+                b_radius=b_radius,
+                s_radius=s_rad
+            )
+            
+            # store results
+            results_avg_volume[i, j] = avg_vol
+            results_std_dev[i, j] = std_dev
     
-    plt.plot(p_values, results_avg_volume, 'bo-')
-    
-    plt.xlabel("Probability p_b (Sampling from Box 'B')")
-    plt.ylabel("Estimated Volume (Biased)")
-    plt.title("Q3b Flaw Analysis: Estimated Volume vs. p_b")
-    plt.grid(True)
-    plt.show()
+    line_plots(results_avg_volume, results_std_dev, p_values, s_radii)
 
 test_q3b()
-
 # main()
