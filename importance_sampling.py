@@ -102,15 +102,16 @@ def montecarlo_importance(prng, b1_r, p, k, R, r, throws, xc=0, yc=0, zc=0.1, pl
     box1_x = box1_y = box1_z = b1_r
     
     # radius and height of small box (half)
-    box2_x = box2_z = R+r
+    box2_x = box2_z = min(R+r, b1_r)
     box2_y = r
 
-    if box2_x > box1_x:
-        box2_x = box2_z = box1_x
+    # box volumes
+    box1_volume = (2 * b1_r) ** 3
+    box2_volume = (2*box2_x)*(2*box2_y)*(2*box2_z)
 
     # create mask to determine where to sample (True = sample from box 1)
     rng = np.random.default_rng()
-    choose1 = rng.random(throws) <= p
+    choose1 = rng.random(throws) < p
 
     # create x, y and z grid of dimension throws
     rx, ry, rz = prng(throws)
@@ -121,26 +122,38 @@ def montecarlo_importance(prng, b1_r, p, k, R, r, throws, xc=0, yc=0, zc=0.1, pl
     zz = np.where(choose1, box1_z, box2_z)
 
     # define centers
-    xc = np.where(choose1, 0, xc)
-    yc = np.where(choose1, 0, yc)
-    zc = np.where(choose1, 0, zc)
+    cx = np.where(choose1, 0, xc)
+    cy = np.where(choose1, 0, yc)
+    cz = np.where(choose1, 0, zc)
 
-    x = xc + (2*xx)*(rx - 0.5)
-    y = yc + (2*yy)*(ry - 0.5)
-    z = zc + (2*zz)*(rz - 0.5)
+    x = cx + (2*xx)*(rx - 0.5)
+    y = cy + (2*yy)*(ry - 0.5)
+    z = cz + (2*zz)*(rz - 0.5)
 
     # check if points in sphere and torus
     sphereHits = sphere(x, y, z, k)
     torusHits = torus(x-xc, y-yc, z-zc, R, r)
-    totalHits = np.sum(np.logical_and(sphereHits, torusHits))
-
-    box1_volume = (2 * b1_r) ** 3
-    box2_volume = (2*box2_x)*(2*box2_y)*(2*box2_z)
+    hits = np.logical_and(sphereHits, torusHits).astype(float)
+    totalHits = int(hits.sum())
 
     # weight accordingly
-    
+    in_box2 = (
+        (np.abs(x-xc) <= box2_x) &
+        (np.abs(y-yc) <= box2_y) &
+        (np.abs(z-zc) <= box2_z)
+    )
 
+    q = np.where(
+        in_box2, p/box1_volume + (1-p)/ box2_volume, p/box1_volume)
+    w = 1.0 / q
 
+    # importance sampling
+    intersection = np.sum(w*hits)/throws
+
+    if plot:
+        plotintersection(x, y, z, sphereHits, torusHits, b1_r)
+
+    return intersection, totalHits
 
     # if True in choose1: sample from box 1 so for every choose1 where true, 
     # the corresponding position in x, y and z is from a position in box 1
@@ -268,8 +281,8 @@ montecarlo_importance(
     k=1, 
     R=0.75, 
     r=0.4, 
-    throws=100, 
+    throws=100000, 
     xc=0, 
     yc=0, 
     zc=0.1, 
-    plot=False)
+    plot=True)
