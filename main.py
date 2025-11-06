@@ -271,7 +271,7 @@ def line_plots(results_volume, results_error, p_values, s_radii):
     
     plt.xlabel("probability from box B)")
     plt.ylabel("estimated Volume (biased)")
-    plt.title("volume vs. p_b (grouped by s_radius)")
+    plt.title("volume vs. p_b (grouped by small box radius)")
     plt.legend()
     plt.grid(True)
 
@@ -282,13 +282,12 @@ def line_plots(results_volume, results_error, p_values, s_radii):
     for i, s_rad in enumerate(s_radii):
         plt.plot(p_values, results_error[i, :], 'o-', label=f's_radius = {s_rad:.2f}')
     
-    plt.xlabel("Probability p_b (from Box 'B')")
-    plt.ylabel("Sample Std. Dev. (Error)")
-    plt.title("Error vs. p_b (Grouped by s_radius)")
+    plt.xlabel("probability from box b)")
+    plt.ylabel("sample standard deviation (error)")
+    plt.title("error vs. p_b (grouped by small box radius)")
     plt.legend()
     plt.grid(True)
     
-    plt.suptitle("Q3b Mixture Proposal Analysis (Line Plots)")
     plt.tight_layout()
     plt.show()
 
