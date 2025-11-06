@@ -76,7 +76,7 @@ def standard_error(sample_std, N):
 # --------------
 # monte carlo
 # --------------
-def montecarlo(prng, radius, k, R, r, throws, xc=0, yc=0, zc=0, plot=False):
+def montecarlo(prng, radius, k, R, r, throws, xc=0, yc=0, zc=0, p=None, plot=False):
     rand = prng(throws)
     x, y, z = radius * (np.ones((3, throws)) - 2 * rand)
 
@@ -93,7 +93,7 @@ def montecarlo(prng, radius, k, R, r, throws, xc=0, yc=0, zc=0, plot=False):
 
     return intersection_volume, totalHits
 
-def montecarlo_importance(prng, b1_r, p, k, R, r, throws, xc=0, yc=0, zc=0.1, plot=False):
+def mc_importance(prng, b1_r, k, R, r, throws, xc=0, yc=0, zc=0.1, p=0.5, plot=False):
     """b1_r : radius of box 1
     p : sampling probability inside box 1
     w: weight for importance sampling
@@ -155,25 +155,8 @@ def montecarlo_importance(prng, b1_r, p, k, R, r, throws, xc=0, yc=0, zc=0.1, pl
 
     return intersection, totalHits
 
-    # if True in choose1: sample from box 1 so for every choose1 where true, 
-    # the corresponding position in x, y and z is from a position in box 1
-
-    # If false then for box 2
-
-
-    # do this for all throws so that you create a list of all sampling points:
-        # sample randomly from 0 to 1, if sample < p then take sample in box 1
-        # otherwise take sample from box 2.create mask for each point True is value from box 1
-        # False is value from box 2. 
-
-    # test if sample points are an intersection of the sphere and torus
-    # weight the sampled points accordingly to the mask that tells you 
-    # where the point is sampled from and apply the correct weight.
-
-
-    return 
-
 def run_monte_carlo(
+        mc=montecarlo,
         N=100000, 
         prng=uniformrandom, 
         radius=1.1, 
@@ -183,7 +166,8 @@ def run_monte_carlo(
         throws=100000,
         xc=0,
         yc=0,
-        zc=0):
+        zc=0,
+        p=None):
     """Runs the monte carlo simulation N times."""
 
     all_volumes = []
@@ -192,7 +176,7 @@ def run_monte_carlo(
     # Time progress bar
     t0 = time.perf_counter()
     for _ in trange(N, desc="Monte Carlo runs", leave=False):
-        intersection_volume, hits = montecarlo(prng, radius, k, R, r, throws, xc, yc, zc)
+        intersection_volume, hits = mc(prng, radius, k, R, r, throws, xc, yc, zc, p)
         all_volumes.append(intersection_volume)
         all_hits.append(hits)
     t1 = time.perf_counter()
@@ -241,15 +225,29 @@ def plotintersection(x, y, z, sphereHits, torusHits, radius):
 
     plt.show()
 
-# Plot error changes and estimates
 
+# plot histogram for deterministic sequence -> show that it is not uniform
+def plotDeterministicHistogram(N):
+    xDet, _, _ = deterministic_XYZ(N)
+    xRand, _, _ = uniformrandom(N)
+
+    plt.hist(xDet, density=True, label="deterministic")
+    plt.hist(xRand, density=True, histtype="step", label="numpy prng")
+    plt.xlabel("Sample value")
+    plt.ylabel("Density of occurence")
+    plt.legend()
+    plt.show()
+    
+    return
 
 # --------------
 # Running code
 # --------------
 def main():
     # case a:
+    print("Starting case a ...")
     a_sample_std, a_average_volume = run_monte_carlo(
+        mc=montecarlo,
         N=10000, 
         prng=uniformrandom, 
         radius=1.1, 
@@ -258,8 +256,10 @@ def main():
         r=0.4, 
         throws=100)
 
+    print("Starting case b ...")
     # case b:
     b_sample_std, b_average_volume = run_monte_carlo(
+        mc=montecarlo,
         N=10000, 
         prng=uniformrandom, 
         radius=1.1, 
@@ -268,21 +268,45 @@ def main():
         r=0.5, 
         throws=100)
  
-    # plot code
+    # plot points for case a
     montecarlo(prng=uniformrandom, radius=1.1, k=1, R=0.75, r=0.4, throws=10000, plot=True)
+
+    # plot points for case b
+    montecarlo(prng=uniformrandom, radius=1.1, k=1, R=0.5, r=0.5, throws=10000, plot=True)
+    
+    # Part 2: deterministic sampling
+    plotDeterministicHistogram(int(1e5))
+
+    # importance sampling (once)
+    print("Starting importance sampling ...")
+    mc_importance(
+        prng=uniformrandom, 
+        b1_r=1.1, 
+        k=1, 
+        R=0.75, 
+        r=0.4, 
+        throws=100000, 
+        xc=0, 
+        yc=0, 
+        zc=0.1, 
+        plot=True,
+        p=0.6)
+    
+    # Importance sampling (multiple)
+    is_sample_std, is_average_volume = run_monte_carlo(
+        mc=mc_importance,
+        N=100000, 
+        prng=uniformrandom, 
+        radius=1.1, 
+        k=1, 
+        R=0.75, 
+        r=0.4, 
+        throws=100,
+        xc=0,
+        yc=0,
+        zc=0.1,
+        p=0.6)
     
 
-#main()
+main()
 
-montecarlo_importance(
-    prng=uniformrandom, 
-    b1_r=1.1, 
-    p=0.8,
-    k=1, 
-    R=0.75, 
-    r=0.4, 
-    throws=100000, 
-    xc=0, 
-    yc=0, 
-    zc=0.1, 
-    plot=True)
