@@ -93,7 +93,7 @@ def montecarlo(prng, radius, k, R, r, throws, xc=0, yc=0, zc=0, plot=False):
 
     return intersection_volume, totalHits
 
-def montecarlo_importance(prng, b1_r, p, R, r, throws, xc=0, yc=0, zc=0.1, plot=False):
+def montecarlo_importance(prng, b1_r, p, k, R, r, throws, xc=0, yc=0, zc=0.1, plot=False):
     """b1_r : radius of box 1
     p : sampling probability inside box 1
     w: weight for importance sampling
@@ -104,6 +104,9 @@ def montecarlo_importance(prng, b1_r, p, R, r, throws, xc=0, yc=0, zc=0.1, plot=
     # radius and height of small box (half)
     box2_x = box2_z = R+r
     box2_y = r
+
+    if box2_x > box1_x:
+        box2_x = box2_z = box1_x
 
     # create mask to determine where to sample (True = sample from box 1)
     rng = np.random.default_rng()
@@ -126,7 +129,18 @@ def montecarlo_importance(prng, b1_r, p, R, r, throws, xc=0, yc=0, zc=0.1, plot=
     y = yc + (2*yy)*(ry - 0.5)
     z = zc + (2*zz)*(rz - 0.5)
 
+    # check if points in sphere and torus
+    sphereHits = sphere(x, y, z, k)
+    torusHits = torus(x-xc, y-yc, z-zc, R, r)
+    totalHits = np.sum(np.logical_and(sphereHits, torusHits))
+
+    box1_volume = (2 * b1_r) ** 3
+    box2_volume = (2*box2_x)*(2*box2_y)*(2*box2_z)
+
+    # weight accordingly
     
+
+
 
     # if True in choose1: sample from box 1 so for every choose1 where true, 
     # the corresponding position in x, y and z is from a position in box 1
@@ -250,10 +264,11 @@ def main():
 montecarlo_importance(
     prng=uniformrandom, 
     b1_r=1.1, 
-    p=0.6, 
+    p=0.8,
+    k=1, 
     R=0.75, 
     r=0.4, 
-    throws=10, 
+    throws=100, 
     xc=0, 
     yc=0, 
     zc=0.1, 
