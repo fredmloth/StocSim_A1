@@ -32,6 +32,23 @@ def torus(x, y, z, R, r):
     
     return hits
 
+# --------------
+# Exact solution
+# --------------
+
+def volumeAnalytical(k, R, r):
+    # only works for centered toroid
+
+    R_1 = (R ** 2 + k ** 2 - r ** 2) / (2 * R)
+
+    F_1 = lambda x, a : -np.power(a ** 2 - x ** 2, 1.5) / 3
+    F_2 = lambda x, a : (np.arcsin(x / a) + 0.5 * np.sin(2 * np.arcsin(x / a))) * 0.5 * a ** 2
+
+    V = F_1(k, k) - F_1(R_1, k)
+    V += F_1(R_1 - R, r) - F_1(-r, r)
+    V += R * (F_2(R_1 - R, r) - F_2(-r, r))
+
+    return V * 4 * np.pi
 
 # --------------
 # Sampling
@@ -370,4 +387,7 @@ def test_q3b():
     line_plots(results_avg_volume, results_std_dev, p_values, s_radii)
 
 # main()
-test_q3b()
+# test_q3b()
+
+print(volumeAnalytical(1.0, 0.75, 0.4))
+print(volumeAnalytical(1.0, 0.5, 0.5))
