@@ -60,6 +60,9 @@ def deterministic_XYZ(N, seed=None):
     for i in range(1, N):
         sequence[:, i] = m * sequence[:, i - 1] * (1 - sequence[:, i - 1])
 
+    # normalise [a, b] -> [0, 1]
+    sequence = (sequence - a) / (b - a)
+
     return sequence 
 
 
@@ -68,23 +71,24 @@ def deterministic_XYZ(N, seed=None):
 # --------------
 # Errors
 # --------------
-def error_variance():
-    """Calculates the error based on average volume, sample variance and sample size
-    computed volume * sample variance/ sqrt(sample size)"""
+def standard_error(sample_std, N):
+    """Calculates the standard error of the mean."""
+    return sample_std / np.sqrt(N)
 
-    return
 
 # --------------
 # monte carlo
 # --------------
 def montecarlo(prng, radius, k, R, r, throws, xc=0, yc=0, zc=0, plot=False):
     rand = prng(throws)
+
+    # normalise [0, 1] -> [-radius, radius]
     x, y, z = radius * (np.ones((3, throws)) - 2 * rand)
 
     sphereHits = sphere(x, y, z, k)
     torusHits = torus(x-xc, y-yc, z-zc, R, r)
 
-    totalHits = np.sum(np.logical_and(sphereHits, torusHits))
+    totalHits = np.sum(sphereHits & torusHits)
 
     box_volume = (2 * radius) ** 3
     intersection_volume = box_volume * (totalHits / throws)
@@ -163,7 +167,52 @@ def plotintersection(x, y, z, sphereHits, torusHits, radius):
 
     plt.show()
 
+# plot histogram for deterministic sequence -> show that it is not uniform
+def plotDeterministicHistogram(N):
+    xDet, _, _ = deterministic_XYZ(N)
+    xRand, _, _ = uniformrandom(N)
+
+    plt.hist(xDet, density=True, label="deterministic")
+    plt.hist(xRand, density=True, histtype="step", label="numpy prng")
+    plt.xlabel("Sample value")
+    plt.ylabel("Density of occurence")
+    plt.legend()
+    plt.show()
+    
+    return
+    
+
 # Plot error changes and estimates
+
+def convergencePlot(N, radius, k, R, r, maxThrows, throwsSamples):
+    throwsList = np.logspace(1, np.log(maxThrows) / np.log(10), throwsSamples, base=10, dtype=np.int32)
+
+    means = np.empty((2, throwsSamples))
+    stds = np.empty((2, throwsSamples))
+    for i in trange(throwsSamples, desc="Convergence plot: ", leave=False):
+        throws = throwsList[i]
+        vols = np.empty((2, N))
+        for n in range(N):
+            vols[0, n], _ = montecarlo(uniformrandom, radius, k, R, r, throws)
+            vols[1, n], _ = montecarlo(deterministic_XYZ, radius, k, R, r, throws)
+
+        means[:, i] = np.mean(vols, axis=1)
+        stds[:, i] = np.std(vols, axis=1)
+
+    fig, ax = plt.subplots()
+
+    ax.errorbar(throwsList, means[0, :], yerr=stds[0, :], fmt='o', label="uniform")
+    ax.errorbar(throwsList, means[1, :], yerr=stds[1, :], fmt='o', label="deterministic")
+    ax.set_xscale("log")
+    ax.set_xlabel("Amount of throws")
+    ax.set_ylabel("Volume estimate (a.u.)")
+    ax.legend()
+
+    plt.show()
+
+    return
+        
+
 
 
 # --------------
@@ -171,37 +220,44 @@ def plotintersection(x, y, z, sphereHits, torusHits, radius):
 # --------------
 def main():
     # case a:
+
     a_sample_std, a_average_volume = run_monte_carlo(
-        N=100000, 
+        N=100, 
         prng=uniformrandom, 
         radius=1.1, 
         k=1, 
         R=0.75, 
         r=0.4, 
-        throws=100)
-    
-    plotintersection(
-        N=100000, 
-        sampling=uniformrandom, 
-        radius=1.1, 
-        k=1, 
-        R=0.75, 
-        r=0.4
-        )
+        throws=int(1e5))
 
     # case b:
     b_sample_std, b_average_volume = run_monte_carlo(
-        N=10000, 
+        N=100, 
         prng=uniformrandom, 
         radius=1.1, 
         k=1, 
         R=0.5, 
         r=0.5, 
-        throws=100)
+        throws=int(1e5))
  
-    # plot code
-    montecarlo(prng=uniformrandom, radius=1.1, k=1, R=0.75, r=0.4, throws=10000, plot=True)
-    
+    # plot case a
+    montecarlo(prng=uniformrandom, 
+               radius=1.1, 
+               k=1, 
+               R=0.75, 
+               r=0.4, 
+               throws=int(1e4), 
+               plot=True)
+
+    convergencePlot(N=100,
+                    radius=1.1,
+                    k=1,
+                    R=0.75,
+                    r=0.4,
+                    maxThrows=int(1e5),
+                    throwsSamples=20)
+
+    plotDeterministicHistogram(int(1e5))
 
 main()
 
