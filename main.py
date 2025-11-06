@@ -79,11 +79,12 @@ def standard_error(sample_std, N):
 # --------------
 # monte carlo
 # --------------
-def montecarlo(prng, b_radius=1.1, k=1, R=0.75, r=0.4, throws=100000, 
+def montecarlo(prng, k=1, R=0.75, r=0.4, throws=100000, 
                xc=0, yc=0, zc=0, 
                plot=False,
                mode='uniform',
                p_b=0.5,
+               b_radius=1.1,
                s_radius=0.4):   # 'uniform' for Q1&Q3a, 'mixture' for Q3b
 
     if mode == 'uniform':
@@ -119,7 +120,7 @@ def montecarlo(prng, b_radius=1.1, k=1, R=0.75, r=0.4, throws=100000,
                 y[i] = s_radius * (1 - 2 * randnum_s[1, i]) + s_center[1] 
                 z[i] = s_radius * (1 - 2 * randnum_s[2, i]) + s_center[2]
 
-    
+
     # check hits
     sphereHits = sphere(x, y, z, k)
     torusHits = torus(x-xc, y-yc, z-zc, R, r)
@@ -138,16 +139,17 @@ def montecarlo(prng, b_radius=1.1, k=1, R=0.75, r=0.4, throws=100000,
 
 
 def run_monte_carlo(
-        N=100000, 
+        N=100, 
         prng=uniformrandom, 
-        radius=1.1, 
         k=1, 
         R=0.75, 
         r=0.4, 
         throws=100000,
-        xc=0,
-        yc=0,
-        zc=0):
+        xc=0, yc=0,zc=0,
+        mode='uniform',
+        p_b=0.5,
+        b_radius=1.1,
+        s_radius=0.4):
     """Runs the monte carlo simulation N times."""
 
     all_volumes = []
@@ -156,16 +158,25 @@ def run_monte_carlo(
     # Time progress bar
     t0 = time.perf_counter()
     for _ in trange(N, desc="Monte Carlo runs", leave=False):
-        intersection_volume, hits = montecarlo(prng, radius, k, R, r, throws, xc, yc, zc)
+        intersection_volume, hits = montecarlo(
+            prng, k, R, r, throws, 
+            xc, yc, zc,
+            plot=False,
+            mode='uniform',
+            p_b=p_b,
+            b_radius=b_radius,
+            s_radius=s_radius
+        )
         all_volumes.append(intersection_volume)
         all_hits.append(hits)
+
     t1 = time.perf_counter()
 
     sample_std = np.std(all_volumes)
     average_volume = np.mean(all_volumes)
 
     elapsed = t1 - t0
-    print(f"for radius={radius}, k={k}, R={R}, r={r}, and throws={throws}, we get:")
+    print(f"for b_radius={b_radius}, k={k}, R={R}, r={r}, and throws={throws}, we get:")
     print(f"average_volume: {average_volume}, sample variance: {sample_std}")
     print(f"Elapsed: {elapsed:.3f}s  ({elapsed/N:.6f}s per run)")
 
@@ -221,7 +232,6 @@ def plotDeterministicHistogram(N):
     
 
 # Plot error changes and estimates
-
 def convergencePlot(N, radius, k, R, r, maxThrows, throwsSamples):
     throwsList = np.logspace(1, np.log(maxThrows) / np.log(10), throwsSamples, base=10, dtype=np.int32)
 
@@ -261,7 +271,7 @@ def main():
     a_sample_std, a_average_volume = run_monte_carlo(
         N=100, 
         prng=uniformrandom, 
-        radius=1.1, 
+        b_radius=1.1, 
         k=1, 
         R=0.75, 
         r=0.4, 
@@ -271,7 +281,7 @@ def main():
     b_sample_std, b_average_volume = run_monte_carlo(
         N=100, 
         prng=uniformrandom, 
-        radius=1.1, 
+        b_radius=1.1, 
         k=1, 
         R=0.5, 
         r=0.5, 
@@ -287,7 +297,7 @@ def main():
                plot=True)
 
     convergencePlot(N=100,
-                    radius=1.1,
+                    b_radius=1.1,
                     k=1,
                     R=0.75,
                     r=0.4,
@@ -296,6 +306,49 @@ def main():
 
     plotDeterministicHistogram(int(1e5))
 
-main()
+def test_q3b():
+    n_throws = int(1e5)
+    b_radius = 1.1       
 
-# problem 3: try diff p values and plot error changes
+    k_3, R_3, r_3 = 1.0, 0.75, 0.4
+    xc_3, yc_3, zc_3 = 0, 0, 0.1
+
+    s_radius = 0.25
+    
+    p_values = np.linspace(0.1, 1.0, 10) 
+    
+    results_avg_volume = []
+    results_std_dev = []
+    
+    print(f"s_radius for test: {s_radius}") # fixed for now, please change if needed
+    print(f"throws per run: {n_throws}")
+    
+    for p in p_values:
+        std_dev, avg_vol = run_monte_carlo(
+            N=10, 
+            prng=uniformrandom,
+            k=k_3, R=R_3, r=r_3,
+            throws=n_throws,
+            xc=xc_3, yc=yc_3, zc=zc_3,
+            mode='mixture',
+            p_b=p,
+            b_radius=b_radius,
+            s_radius=s_radius
+        )
+        results_avg_volume.append(avg_vol)
+        results_std_dev.append(std_dev)
+
+    # plotting
+    plt.figure(figsize=(8, 5))
+    
+    plt.plot(p_values, results_avg_volume, 'bo-')
+    
+    plt.xlabel("Probability p_b (Sampling from Box 'B')")
+    plt.ylabel("Estimated Volume (Biased)")
+    plt.title("Q3b Flaw Analysis: Estimated Volume vs. p_b")
+    plt.grid(True)
+    plt.show()
+
+test_q3b()
+
+# main()
