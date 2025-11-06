@@ -277,6 +277,22 @@ def main():
     # Part 2: deterministic sampling
     plotDeterministicHistogram(int(1e5))
 
+    # Part 3: off center measurements
+    print("Starting off-center measurements ...")
+    oc_sample_std, oc_average_volume = run_monte_carlo(
+        mc=montecarlo,
+        N=100000, 
+        prng=uniformrandom, 
+        radius=1.1, 
+        k=1, 
+        R=0.75, 
+        r=0.4, 
+        throws=100,
+        xc=0,
+        yc=0,
+        zc=0.1)
+    
+
     # importance sampling (once)
     print("Starting importance sampling ...")
     mc_importance(
