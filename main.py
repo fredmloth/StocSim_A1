@@ -204,3 +204,5 @@ def main():
     
 
 main()
+
+# problem 3: try diff p values and plot error changes
