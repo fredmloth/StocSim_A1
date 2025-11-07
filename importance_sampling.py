@@ -303,6 +303,74 @@ def convergencePlot(N, radius, k, R, r, maxThrows, throwsSamples):
     plt.show()
 
 
+# DOUBLE CHECK THE LINEPLOT AND Q3B
+def line_plots(results_volume, results_error, p_values, s_radii):
+    """Plot biased volume and sample std vs p (grouped by s_radius)."""
+    plt.figure(figsize=(14, 6))
+
+    # plot 1: biased estimated volume
+    plt.subplot(1, 2, 1)
+    for i, s_rad in enumerate(s_radii):
+        plt.plot(p_values, results_volume[i, :], 'o-', label=f's_radius = {s_rad:.2f}')
+    plt.xlabel("probability from box B)")
+    plt.ylabel("estimated Volume (biased)")
+    plt.title("volume vs. p_b (grouped by small box radius)")
+    plt.legend()
+    plt.grid(True)
+
+    # plot 2: std dev error
+    plt.subplot(1, 2, 2)
+    for i, s_rad in enumerate(s_radii):
+        plt.plot(p_values, results_error[i, :], 'o-', label=f's_radius = {s_rad:.2f}')
+    plt.xlabel("probability from box b)")
+    plt.ylabel("sample standard deviation (error)")
+    plt.title("error vs. p_b (grouped by small box radius)")
+    plt.legend()
+    plt.grid(True)
+
+    plt.tight_layout()
+    plt.show()
+
+
+def test_q3b():
+    """Run grid over p-values and s_radii, collect stats, then plot."""
+    n_throws = int(1e5)
+    b_radius = 1.1
+    
+    # geometry
+    k_3, R_3, r_3 = 1.0, 0.75, 0.4
+    xc_3, yc_3, zc_3 = 0, 0, 0.1
+ 
+    # sweep values
+    p_values = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
+    s_radii  = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
+
+    n_repeats = 500
+
+    results_avg_volume = np.empty((len(s_radii), len(p_values)))
+    results_std_dev = np.empty((len(s_radii), len(p_values)))
+    
+    for i, s_rad in enumerate(s_radii):
+        for j, p in enumerate(p_values):
+            print(f" > testing s_rad={s_rad:.2f}, p_b={p:.1f} ...")
+            std_dev, avg_vol = run_monte_carlo(
+                mc=mc_importance,
+                N=n_repeats,
+                prng=uniformrandom,
+                radius=b_radius,
+                k=k_3, R=R_3, r=r_3,
+                throws=n_throws,
+                xc=xc_3, yc=yc_3, zc=zc_3,
+                p=p
+            )
+            
+            # store results
+            results_avg_volume[i, j] = avg_vol
+            results_std_dev[i, j] = std_dev
+    
+    line_plots(results_avg_volume, results_std_dev, p_values, s_radii)
+
+
 # --------------
 # Running code
 # --------------
@@ -409,6 +477,9 @@ def main():
         yc=0,
         zc=0.1,
         p=0.6)
+    
+    print("Starting q3b grid ...")
+    test_q3b()
     
 
 main()
