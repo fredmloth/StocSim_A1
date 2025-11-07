@@ -4,9 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-import time
-from tqdm import trange
-
 # --------------
 # Volume dimensions
 # --------------
@@ -217,22 +214,17 @@ def run_monte_carlo(
     all_volumes = []
     all_hits = []
 
-    # Time progress bar
-    t0 = time.perf_counter()
-    for _ in trange(N, desc="Monte Carlo runs", leave=False):
+    for _ in range(N):
         intersection_volume, hits = mc(prng, radius, k, R, r, throws, xc, yc, zc, p)
         all_volumes.append(intersection_volume)
         all_hits.append(hits)
-    t1 = time.perf_counter()
 
     # Determines standard deviation and average volume
     sample_std = np.std(all_volumes)
     average_volume = np.mean(all_volumes)
 
-    elapsed = t1 - t0
     print(f"for radius={radius}, k={k}, R={R}, r={r}, and throws={throws}, we get:")
     print(f"average_volume: {average_volume}, sample variance: {sample_std}")
-    print(f"Elapsed: {elapsed:.3f}s  ({elapsed/N:.6f}s per run)")
 
     return sample_std, average_volume, all_volumes
 
@@ -278,8 +270,8 @@ def plotDeterministicHistogram(N):
     xDet, _, _ = deterministic_XYZ(N)
     xRand, _, _ = uniformrandom(N)
 
-    plt.hist(xDet, density=True, label="deterministic")
-    plt.hist(xRand, density=True, histtype="step", label="numpy prng")
+    plt.hist(xDet, density=False, label="deterministic")
+    plt.hist(xRand, density=False, histtype="step", label="numpy prng")
     plt.xlabel("Sample value")
     plt.ylabel("Density of occurence")
     plt.legend()
@@ -298,16 +290,15 @@ def convergencePlot(N, radius, k, R, r, maxThrows, throwsSamples):
 
     means = np.empty((2, throwsSamples))
     stds = np.empty((2, throwsSamples))
-    for i in trange(throwsSamples, desc="Convergence plot: ", leave=False):
+
+    for i in range(throwsSamples):
         throws = throwsList[i]
         vols = np.empty((2, N))
         
-        # run N repetitions for both samplers
         for n in range(N):
             vols[0, n], _ = montecarlo(uniformrandom, radius, k, R, r, throws)
             vols[1, n], _ = montecarlo(deterministic_XYZ, radius, k, R, r, throws)
 
-        # aggregate: mean and std across repetitions
         means[:, i] = np.mean(vols, axis=1)
         stds[:,  i] = np.std(vols, axis=1)
 
@@ -374,10 +365,7 @@ def plot_pvalues(
     ax.grid(True, alpha=0.3)
     ax.legend()
 
-    plt.tight_layout()
     plt.show()
-
-
 
 
 # --------------
