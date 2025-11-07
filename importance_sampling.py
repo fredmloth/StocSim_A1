@@ -223,9 +223,10 @@ def run_monte_carlo(
     # Determines standard deviation and average volume
     sample_std = np.std(all_volumes)
     average_volume = np.mean(all_volumes)
+    error = standard_error(sample_std, N)
 
     print(f"for radius={radius}, k={k}, R={R}, r={r}, and throws={throws}, we get:")
-    print(f"average_volume: {average_volume}, sample variance: {sample_std}")
+    print(f"average_volume: {average_volume}, sample std: {sample_std}, sample error: {error}")
 
     return sample_std, average_volume, all_volumes
 
@@ -267,8 +268,9 @@ def plotintersection(x, y, z, sphereHits, torusHits, radius, filename="untitled"
     plt.show()
 
 
-# plot histogram for deterministic sequence -> show that it is not uniform
 def plotDeterministicHistogram(N):
+    """plots histogram for deterministic sequence to show that it is 
+    not uniform"""
     xDet, _, _ = deterministic_XYZ(N)
     xRand, _, _ = uniformrandom(N)
 
@@ -281,8 +283,6 @@ def plotDeterministicHistogram(N):
     
     fig.savefig("deterministic_histogram.png")
     plt.show()
-    
-    return
 
 
 # Plot error changes and estimates
@@ -325,11 +325,11 @@ def convergencePlot(N, radius, k, R, r, maxThrows, throwsSamples, filename="unti
 
 
 def plot_pvalues(
-    mean_volumes,          # shape [P]
-    all_volumes_by_p,      # list of length P, each is [N] runs for that p
-    p_values,              # shape [P]
-    sem=None,              # optional SEM per p (std/sqrt(N))
-    show_std=True,         # also show sample std across runs on the error panel
+    mean_volumes,
+    all_volumes_by_p,
+    p_values,
+    sem=None,
+    show_std=True,
     title_prefix='Importance sampling'
 ):
     p = np.asarray(p_values, dtype=float)
@@ -348,7 +348,7 @@ def plot_pvalues(
 
     fig, axes = plt.subplots(1, 2, figsize=(12, 5), sharex=True)
 
-    # --- Left: mean + min–max envelope (no error bars) ---
+    # Left: mean + min–max 
     ax = axes[0]
     ax.plot(p, mu, 'o-', label='mean')
     ax.fill_between(p, vmin, vmax, alpha=0.2, label='min–max across runs')
@@ -358,7 +358,7 @@ def plot_pvalues(
     ax.grid(True, alpha=0.3)
     ax.legend()
 
-    # --- Right: error-focused view (SEM / std vs p) ---
+    # Right: (SEM / std vs p)
     ax = axes[1]
     lines = []
     if sem is not None:
