@@ -37,9 +37,9 @@ def torus(x, y, z, R, r):
 # --------------
 # Exact solution
 # --------------
-
 def volumeAnalytical(k, R, r):
-    # only works for centered toroid
+    """Analytically determines the volume, only works for equally
+    centered bodies."""
 
     R_1 = (R ** 2 + k ** 2 - r ** 2) / (2 * R)
 
@@ -234,7 +234,7 @@ def run_monte_carlo(
     print(f"average_volume: {average_volume}, sample variance: {sample_std}")
     print(f"Elapsed: {elapsed:.3f}s  ({elapsed/N:.6f}s per run)")
 
-    return sample_std, average_volume
+    return sample_std, average_volume, all_volumes
 
 
 # --------------
@@ -288,7 +288,6 @@ def plotDeterministicHistogram(N):
     return
 
 
-
 # Plot error changes and estimates
 def convergencePlot(N, radius, k, R, r, maxThrows, throwsSamples):
     """Runs the Monte Carlo simulation N times and plots convergence for 
@@ -327,84 +326,66 @@ def convergencePlot(N, radius, k, R, r, maxThrows, throwsSamples):
     plt.show()
 
 
-# DOUBLE CHECK THE LINEPLOT AND Q3B
-def line_plots(results_volume, results_error, p_values, s_radii):
-    """Plot biased volume and sample std vs p (grouped by s_radius)."""
-    plt.figure(figsize=(14, 6))
+def plot_pvalues(
+    mean_volumes,          # shape [P]
+    all_volumes_by_p,      # list of length P, each is [N] runs for that p
+    p_values,              # shape [P]
+    sem=None,              # optional SEM per p (std/sqrt(N))
+    show_std=True,         # also show sample std across runs on the error panel
+    title_prefix='Importance sampling'
+):
+    p = np.asarray(p_values, dtype=float)
+    mu = np.asarray(mean_volumes, dtype=float)
 
-    # plot 1: estimated volume
-    plt.subplot(1, 2, 1)
-    for i, s_rad in enumerate(s_radii):
-        plt.plot(p_values, results_volume[i, :], 'o-', label=f's_radius = {s_rad:.2f}')
-    plt.xlabel("probability from box B)")
-    plt.ylabel("estimated Volume")
-    plt.title("volume vs. p_b (grouped by small box radius)")
-    plt.legend()
-    plt.grid(True)
+    # min/max and std across runs for each p
+    vmin = np.array([np.min(v) for v in all_volumes_by_p], dtype=float)
+    vmax = np.array([np.max(v) for v in all_volumes_by_p], dtype=float)
+    sdev = np.array([np.std(v, ddof=1) for v in all_volumes_by_p], dtype=float)
 
-    # plot 2: std dev error
-    plt.subplot(1, 2, 2)
-    for i, s_rad in enumerate(s_radii):
-        plt.plot(p_values, results_error[i, :], 'o-', label=f's_radius = {s_rad:.2f}')
-    plt.xlabel("probability from box b)")
-    plt.ylabel("sample standard deviation (error)")
-    plt.title("error vs. p_b (grouped by small box radius)")
-    plt.legend()
-    plt.grid(True)
+    # consistent left-to-right order
+    order = np.argsort(p)
+    p, mu, vmin, vmax, sdev = p[order], mu[order], vmin[order], vmax[order], sdev[order]
+    if sem is not None:
+        sem = np.asarray(sem, dtype=float)[order]
+
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5), sharex=True)
+
+    # --- Left: mean + min–max envelope (no error bars) ---
+    ax = axes[0]
+    ax.plot(p, mu, 'o-', label='mean')
+    ax.fill_between(p, vmin, vmax, alpha=0.2, label='min–max across runs')
+    ax.set_xlabel('p')
+    ax.set_ylabel('Estimated volume')
+    ax.set_title(f'{title_prefix}: mean with min–max envelope')
+    ax.grid(True, alpha=0.3)
+    ax.legend()
+
+    # --- Right: error-focused view (SEM / std vs p) ---
+    ax = axes[1]
+    lines = []
+    if sem is not None:
+        lines += ax.plot(p, sem, 'o-', label='SEM')
+    if show_std:
+        lines += ax.plot(p, sdev, 'o--', label='Std across runs')
+    ax.set_xlabel('p')
+    ax.set_ylabel('Error')
+    ax.set_title('Error vs p (lower is better)')
+    ax.grid(True, alpha=0.3)
+    ax.legend()
 
     plt.tight_layout()
     plt.show()
 
 
-def test_q3b():
-    """Run grid over p-values and s_radii, collect stats, then plot."""
-    n_throws = int(1e5)
-    b_radius = 1.1
-    
-    # geometry
-    k_3, R_3, r_3 = 1.0, 0.75, 0.4
-    xc_3, yc_3, zc_3 = 0, 0, 0.1
- 
-    # sweep values
-    p_values = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
-    s_radii  = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
-
-    n_repeats = 500
-
-    results_avg_volume = np.empty((len(s_radii), len(p_values)))
-    results_std_dev = np.empty((len(s_radii), len(p_values)))
-    
-    for i, s_rad in enumerate(s_radii):
-        for j, p in enumerate(p_values):
-            print(f" > testing s_rad={s_rad:.2f}, p_b={p:.1f} ...")
-            std_dev, avg_vol = run_monte_carlo(
-                mc=mc_importance,
-                N=n_repeats,
-                prng=uniformrandom,
-                radius=b_radius,
-                k=k_3, R=R_3, r=r_3,
-                throws=n_throws,
-                xc=xc_3, yc=yc_3, zc=zc_3,
-                p=p
-            )
-            
-            # store results
-            results_avg_volume[i, j] = avg_vol
-            results_std_dev[i, j] = std_dev
-    
-    line_plots(results_avg_volume, results_std_dev, p_values, s_radii)
 
 
 # --------------
 # Running code
 # --------------
 def main():
-    """
-    TO DO: standard error calculation/plotting
-    """
     # case a:
     print("Starting case a ...")
-    a_sample_std, a_average_volume = run_monte_carlo(
+    a_sample_std, a_average_volume, _ = run_monte_carlo(
         mc=montecarlo,
         N=100, 
         prng=uniformrandom, 
@@ -412,7 +393,7 @@ def main():
         k=1, 
         R=0.75, 
         r=0.4, 
-        throws=int(1e5))
+        throws=10000)
     
     print("Starting convergence plot for case a...")
     convergencePlot(
@@ -427,15 +408,15 @@ def main():
 
     print("Starting case b ...")
     # case b:
-    b_sample_std, b_average_volume = run_monte_carlo(
+    b_sample_std, b_average_volume, _ = run_monte_carlo(
         mc=montecarlo,
-        N=10000, 
+        N=100, 
         prng=uniformrandom, 
         radius=1.1, 
         k=1, 
         R=0.5, 
         r=0.5, 
-        throws=100)
+        throws=10000)
     
     print("Starting convergence plot for case b...")
     convergencePlot(
@@ -444,7 +425,7 @@ def main():
         k=1, 
         R=0.5, 
         r=0.5, 
-        maxThrows=int(1e5),
+        maxThrows=10000,
         throwsSamples=10)
  
     # plot points for case a
@@ -456,17 +437,24 @@ def main():
     # Part 2: deterministic sampling
     plotDeterministicHistogram(int(1e5))
 
+    # plot points for case a deterministic sampling
+    montecarlo(prng=deterministic_XYZ, radius=1.1, k=1, R=0.75, r=0.4, throws=10000, plot=True)
+
+    # plot points for case b deterministic sampling
+    montecarlo(prng=deterministic_XYZ, radius=1.1, k=1, R=0.5, r=0.5, throws=10000, plot=True)
+
+
     # Part 3: off center measurements
     print("Starting off-center measurements ...")
-    oc_sample_std, oc_average_volume = run_monte_carlo(
+    oc_sample_std, oc_average_volume, _ = run_monte_carlo(
         mc=montecarlo,
-        N=100000, 
+        N=100, 
         prng=uniformrandom, 
         radius=1.1, 
         k=1, 
         R=0.75, 
         r=0.4, 
-        throws=100,
+        throws=10000,
         xc=0,
         yc=0,
         zc=0.1)
@@ -486,41 +474,41 @@ def main():
         plot=True,
         p=0.6)
     
-    # Importance sampling (multiple)
-    print("Starting importance sampling (multiple) ...")
-    is_sample_std, is_average_volume = run_monte_carlo(
-        mc=mc_importance,
-        N=100000, 
-        prng=uniformrandom, 
-        radius=1.1, 
-        k=1, 
-        R=0.75, 
-        r=0.4, 
-        throws=100,
-        xc=0,
-        yc=0,
-        zc=0.1,
-        p=0.6)
-    
-    print("Starting q3b grid ...")
-    test_q3b()
-    
 
+    #Importance sampling (different p_values)
+    p_values = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    is_avg_volumes = []
+    is_all_volumes = []
+    is_std = []
+    N = 100
+
+    for p_value in p_values:
+        print(f"Starting importance sampling for p = {p_value} ...")
+        std, volume, all_volumes = run_monte_carlo(
+            mc=mc_importance,
+            N=N, 
+            prng=uniformrandom, 
+            radius=1.1, 
+            k=1, 
+            R=0.75, 
+            r=0.4, 
+            throws=1000000,
+            xc=0,
+            yc=0,
+            zc=0.1,
+            p=p_value)
+        is_avg_volumes.append(volume)
+        is_all_volumes.append(all_volumes)
+        is_std.append(std)
+    
+    s_error = np.array(is_std) / np.sqrt(N)
+
+    # Simple min–max shading + mean line
+    plot_pvalues(
+        mean_volumes=is_avg_volumes,
+        all_volumes_by_p=is_all_volumes,
+        p_values=p_values,
+        sem=s_error)
+    
+    
 main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
