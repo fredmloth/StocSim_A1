@@ -108,7 +108,8 @@ def montecarlo(
         yc=0, 
         zc=0, 
         p=None, 
-        plot=False):
+        plot=False,
+        filename="untitled"):
     """Runs a single monte carlo method to solve the intersection volume 
     of two shapes: sphere and torus. Returns the volume and the sum of 
     the total amount of points calculated to be in the intersection."""
@@ -127,12 +128,12 @@ def montecarlo(
     intersection_volume = box_volume * (totalHits / throws)
 
     if plot == True:
-        plotintersection(x, y, z, sphereHits, torusHits, radius)
+        plotintersection(x, y, z, sphereHits, torusHits, radius, filename=filename)
 
     return intersection_volume, totalHits
 
 
-def mc_importance(prng, b1_r, k, R, r, throws, xc=0, yc=0, zc=0.1, p=0.5, plot=False):
+def mc_importance(prng, b1_r, k, R, r, throws, xc=0, yc=0, zc=0.1, p=0.5, plot=False, filename="untitled"):
     """Runs asingle monte carlo method with importance sampling 
     (for p and 1-p) to solve the intersection volume of two shapes: 
     sphere and torus. Returns the volume and the sum of the total amount 
@@ -190,7 +191,7 @@ def mc_importance(prng, b1_r, k, R, r, throws, xc=0, yc=0, zc=0.1, p=0.5, plot=F
     intersection = np.sum(w*hits)/throws
 
     if plot:
-        plotintersection(x, y, z, sphereHits, torusHits, b1_r)
+        plotintersection(x, y, z, sphereHits, torusHits, b1_r, filename=filename)
 
     return intersection, totalHits
 
@@ -232,7 +233,7 @@ def run_monte_carlo(
 # --------------
 # Plotting code
 # --------------
-def plotintersection(x, y, z, sphereHits, torusHits, radius):
+def plotintersection(x, y, z, sphereHits, torusHits, radius, filename="untitled"):
     """Plots the intersected points."""
     # store points for each category
     
@@ -262,7 +263,7 @@ def plotintersection(x, y, z, sphereHits, torusHits, radius):
     ax.set_ylim([-radius, radius])
     ax.set_zlim([-radius, radius])
 
-    fig.savefig("intersection_plot.png")
+    fig.savefig(filename)
     plt.show()
 
 
@@ -285,7 +286,7 @@ def plotDeterministicHistogram(N):
 
 
 # Plot error changes and estimates
-def convergencePlot(N, radius, k, R, r, maxThrows, throwsSamples):
+def convergencePlot(N, radius, k, R, r, maxThrows, throwsSamples, filename="untitled"):
     """Runs the Monte Carlo simulation N times and plots convergence for 
     uniform vs deterministic samplers."""
     # log-spaced list of throw counts between 10 and maxThrows
@@ -319,7 +320,7 @@ def convergencePlot(N, radius, k, R, r, maxThrows, throwsSamples):
     ax.set_title(f"Convergence Plot (N={N} repeats)")
     ax.legend()
 
-    fig.savefig("convergence_plot.png")
+    fig.savefig(filename)
     plt.show()
 
 
@@ -391,7 +392,7 @@ def main():
         k=1, 
         R=0.75, 
         r=0.4, 
-        throws=10000)
+        throws=int(1e5))
     
     print("Starting convergence plot for case a...")
     convergencePlot(
@@ -401,7 +402,8 @@ def main():
         R=0.75, 
         r=0.4, 
         maxThrows=int(1e5),
-        throwsSamples=10)
+        throwsSamples=10,
+        filename="converge_case_a")
 
 
     print("Starting case b ...")
@@ -414,7 +416,7 @@ def main():
         k=1, 
         R=0.5, 
         r=0.5, 
-        throws=10000)
+        throws=int(1e5))
     
     print("Starting convergence plot for case b...")
     convergencePlot(
@@ -423,23 +425,53 @@ def main():
         k=1, 
         R=0.5, 
         r=0.5, 
-        maxThrows=10000,
-        throwsSamples=10)
+        maxThrows=int(1e5),
+        throwsSamples=10,
+        filename="convergence_case_b")
  
     # plot points for case a
-    montecarlo(prng=uniformrandom, radius=1.1, k=1, R=0.75, r=0.4, throws=10000, plot=True)
+    montecarlo(
+        prng=uniformrandom, 
+        radius=1.1,
+        k=1, 
+        R=0.75, 
+        r=0.4, 
+        throws=int(1e4), 
+        plot=True, 
+        filename="case_a_uniform")
 
     # plot points for case b
-    montecarlo(prng=uniformrandom, radius=1.1, k=1, R=0.5, r=0.5, throws=10000, plot=True)
+    montecarlo(prng=uniformrandom, 
+               radius=1.1, 
+               k=1, 
+               R=0.5, 
+               r=0.5, 
+               throws=int(1e4), 
+               plot=True, 
+               filename="case_b_uniform")
     
     # Part 2: deterministic sampling
     plotDeterministicHistogram(int(1e5))
 
     # plot points for case a deterministic sampling
-    montecarlo(prng=deterministic_XYZ, radius=1.1, k=1, R=0.75, r=0.4, throws=10000, plot=True)
+    montecarlo(prng=deterministic_XYZ, 
+               radius=1.1, 
+               k=1, 
+               R=0.75, 
+               r=0.4, 
+               throws=int(1e4), 
+               plot=True, 
+               filename="case_a_deterministic")
 
     # plot points for case b deterministic sampling
-    montecarlo(prng=deterministic_XYZ, radius=1.1, k=1, R=0.5, r=0.5, throws=10000, plot=True)
+    montecarlo(prng=deterministic_XYZ, 
+               radius=1.1, 
+               k=1, 
+               R=0.5, 
+               r=0.5, 
+               throws=int(1e4), 
+               plot=True, 
+               filename="case_b_deterministic")
 
 
     # Part 3: off center measurements
@@ -452,7 +484,7 @@ def main():
         k=1, 
         R=0.75, 
         r=0.4, 
-        throws=10000,
+        throws=int(1e5),
         xc=0,
         yc=0,
         zc=0.1)
@@ -465,12 +497,13 @@ def main():
         k=1, 
         R=0.75, 
         r=0.4, 
-        throws=100000, 
+        throws=int(1e4), 
         xc=0, 
         yc=0, 
         zc=0.1, 
         plot=True,
-        p=0.6)
+        p=0.6,
+        filename="mc_importance")
     
 
     #Importance sampling (different p_values)
@@ -490,7 +523,7 @@ def main():
             k=1, 
             R=0.75, 
             r=0.4, 
-            throws=1000000,
+            throws=int(1e5),
             xc=0,
             yc=0,
             zc=0.1,
