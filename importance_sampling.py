@@ -83,6 +83,9 @@ def deterministic_XYZ(N, seed=None):
     for i in range(1, N):
         sequence[:, i] = m * sequence[:, i - 1] * (1 - sequence[:, i - 1])
 
+    # normalise [a, b] -> [0, 1]
+    sequence = (sequence - a) / (b - a)
+
     return sequence 
 
 
