@@ -308,12 +308,12 @@ def line_plots(results_volume, results_error, p_values, s_radii):
     """Plot biased volume and sample std vs p (grouped by s_radius)."""
     plt.figure(figsize=(14, 6))
 
-    # plot 1: biased estimated volume
+    # plot 1: estimated volume
     plt.subplot(1, 2, 1)
     for i, s_rad in enumerate(s_radii):
         plt.plot(p_values, results_volume[i, :], 'o-', label=f's_radius = {s_rad:.2f}')
     plt.xlabel("probability from box B)")
-    plt.ylabel("estimated Volume (biased)")
+    plt.ylabel("estimated Volume")
     plt.title("volume vs. p_b (grouped by small box radius)")
     plt.legend()
     plt.grid(True)
@@ -382,22 +382,22 @@ def main():
     print("Starting case a ...")
     a_sample_std, a_average_volume = run_monte_carlo(
         mc=montecarlo,
-        N=10000, 
+        N=100, 
         prng=uniformrandom, 
         radius=1.1, 
         k=1, 
         R=0.75, 
         r=0.4, 
-        throws=100)
+        throws=1e5)
     
     print("Starting convergence plot for case a...")
     convergencePlot(
-        N=10000,
+        N=100,
         radius=1.1, 
         k=1, 
         R=0.75, 
         r=0.4, 
-        maxThrows=100,
+        maxThrows=1e5,
         throwsSamples=10)
 
 

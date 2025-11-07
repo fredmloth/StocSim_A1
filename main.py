@@ -294,7 +294,7 @@ def line_plots(results_volume, results_error, p_values, s_radii):
     for i, s_rad in enumerate(s_radii):
         plt.plot(p_values, results_error[i, :], 'o-', label=f's_radius = {s_rad:.2f}')
     
-    plt.xlabel("probability from box b)")
+    plt.xlabel("probability from box b")
     plt.ylabel("sample standard deviation (error)")
     plt.title("error vs. p_b (grouped by small box radius)")
     plt.legend()
