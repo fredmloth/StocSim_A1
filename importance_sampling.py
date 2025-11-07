@@ -266,6 +266,43 @@ def plotDeterministicHistogram(N):
     
     return
 
+
+
+# Plot error changes and estimates
+def convergencePlot(N, radius, k, R, r, maxThrows, throwsSamples):
+    """Runs the Monte Carlo simulation N times and plots convergence for 
+    uniform vs deterministic samplers."""
+    # log-spaced list of throw counts between 10 and maxThrows
+    throwsList = np.logspace(1, np.log(maxThrows) / np.log(10), 
+                             throwsSamples, base=10, dtype=np.int32)
+
+    means = np.empty((2, throwsSamples))
+    stds = np.empty((2, throwsSamples))
+    for i in trange(throwsSamples, desc="Convergence plot: ", leave=False):
+        throws = throwsList[i]
+        vols = np.empty((2, N))
+        
+        # run N repetitions for both samplers
+        for n in range(N):
+            vols[0, n], _ = montecarlo(uniformrandom, radius, k, R, r, throws)
+            vols[1, n], _ = montecarlo(deterministic_XYZ, radius, k, R, r, throws)
+
+        # aggregate: mean and std across repetitions
+        means[:, i] = np.mean(vols, axis=1)
+        stds[:,  i] = np.std(vols, axis=1)
+
+    # plot mean with std as error bars
+    fig, ax = plt.subplots()
+    ax.errorbar(throwsList, means[0, :], yerr=stds[0, :], fmt='o', label="uniform")
+    ax.errorbar(throwsList, means[1, :], yerr=stds[1, :], fmt='o', label="deterministic")
+    ax.set_xscale("log")
+    ax.set_xlabel("Amount of throws")
+    ax.set_ylabel("Volume estimate (a.u.)")
+    ax.legend()
+
+    plt.show()
+
+
 # --------------
 # Running code
 # --------------
@@ -284,6 +321,17 @@ def main():
         R=0.75, 
         r=0.4, 
         throws=100)
+    
+    print("Starting convergence plot for case a...")
+    convergencePlot(
+        N=10000,
+        radius=1.1, 
+        k=1, 
+        R=0.75, 
+        r=0.4, 
+        maxThrows=100,
+        throwsSamples=10)
+
 
     print("Starting case b ...")
     # case b:
@@ -296,6 +344,16 @@ def main():
         R=0.5, 
         r=0.5, 
         throws=100)
+    
+    print("Starting convergence plot for case b...")
+    convergencePlot(
+        N=10000,
+        radius=1.1, 
+        k=1, 
+        R=0.7, 
+        r=0.5, 
+        maxThrows=100,
+        throwsSamples=10)
  
     # plot points for case a
     montecarlo(prng=uniformrandom, radius=1.1, k=1, R=0.75, r=0.4, throws=10000, plot=True)
@@ -354,4 +412,20 @@ def main():
     
 
 main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
