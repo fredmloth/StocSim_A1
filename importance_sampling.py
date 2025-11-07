@@ -262,7 +262,7 @@ def plotintersection(x, y, z, sphereHits, torusHits, radius):
     ax.set_xlabel('X Axis')
     ax.set_ylabel('Y Axis')
     ax.set_zlabel('Z Axis')
-    ax.set_title("Intersection")
+    ax.set_title(f"Intersection")
     ax.legend()
     
     # set limits for each axis
@@ -315,12 +315,13 @@ def convergencePlot(N, radius, k, R, r, maxThrows, throwsSamples):
 
     # plot mean with std as error bars
     fig, ax = plt.subplots()
-    ax.errorbar(throwsList, means[0, :], yerr=stds[0, :], fmt='o', label="uniform")
-    ax.errorbar(throwsList, means[1, :], yerr=stds[1, :], fmt='o', label="deterministic")
+    ax.errorbar(throwsList, means[0, :], yerr=stds[0, :], fmt='o', label="uniform (mean ± 1σ)", capsize=3, elinewidth=1)
+    ax.errorbar(throwsList, means[1, :], yerr=stds[1, :], fmt='o', label="deterministic (mean ± 1σ)", capsize=3, elinewidth=1)
     ax.hlines(exactVolume, np.min(throwsList), np.max(throwsList), linestyle="dashed", color="grey", label="exact")
     ax.set_xscale("log")
     ax.set_xlabel("Amount of throws")
-    ax.set_ylabel("Volume estimate (a.u.)")
+    ax.set_ylabel("Mean Volume (± Std. Deviation)")
+    ax.set_title(f"Convergence Plot (N={N} repeats)")
     ax.legend()
 
     plt.show()
