@@ -244,7 +244,7 @@ def plotDeterministicHistogram(N):
     
 
 # Plot error changes and estimates
-def convergencePlot(N, radius, k, R, r, maxThrows, throwsSamples):
+def convergencePlot(N, b_radius, k, R, r, maxThrows, throwsSamples):
     throwsList = np.logspace(1, np.log(maxThrows) / np.log(10), throwsSamples, base=10, dtype=np.int32)
 
     means = np.empty((2, throwsSamples))
@@ -253,16 +253,19 @@ def convergencePlot(N, radius, k, R, r, maxThrows, throwsSamples):
         throws = throwsList[i]
         vols = np.empty((2, N))
         for n in range(N):
-            vols[0, n], _ = montecarlo(uniformrandom, radius, k, R, r, throws)
-            vols[1, n], _ = montecarlo(deterministic_XYZ, radius, k, R, r, throws)
+            vols[0, n], _ = montecarlo(uniformrandom, b_radius, k, R, r, throws)
+            vols[1, n], _ = montecarlo(deterministic_XYZ, b_radius, k, R, r, throws)
 
         means[:, i] = np.mean(vols, axis=1)
         stds[:, i] = np.std(vols, axis=1)
 
     fig, ax = plt.subplots()
 
+    exactVolume = volumeAnalytical(k, R, r)
+
     ax.errorbar(throwsList, means[0, :], yerr=stds[0, :], fmt='o', label="uniform")
     ax.errorbar(throwsList, means[1, :], yerr=stds[1, :], fmt='o', label="deterministic")
+    ax.hlines(exactVolume, np.min(throwsList), np.max(throwsList), linestyle="dashed", color="grey", label="exact")
     ax.set_xscale("log")
     ax.set_xlabel("Amount of throws")
     ax.set_ylabel("Volume estimate (a.u.)")
@@ -338,11 +341,21 @@ def main():
                throws=int(1e4), 
                plot=True)
 
+    # convergence plot case a
     convergencePlot(N=100,
                     b_radius=1.1,
                     k=1,
                     R=0.75,
                     r=0.4,
+                    maxThrows=int(1e5),
+                    throwsSamples=20)
+    
+    # convergence plot case b
+    convergencePlot(N=100,
+                    b_radius=1.1,
+                    k=1,
+                    R=0.5,
+                    r=0.5,
                     maxThrows=int(1e5),
                     throwsSamples=20)
 
@@ -386,8 +399,5 @@ def test_q3b():
     
     line_plots(results_avg_volume, results_std_dev, p_values, s_radii)
 
-# main()
+main()
 # test_q3b()
-
-print(volumeAnalytical(1.0, 0.75, 0.4))
-print(volumeAnalytical(1.0, 0.5, 0.5))

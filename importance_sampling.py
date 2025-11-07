@@ -34,6 +34,24 @@ def torus(x, y, z, R, r):
     
     return hits
 
+# --------------
+# Exact solution
+# --------------
+
+def volumeAnalytical(k, R, r):
+    # only works for centered toroid
+
+    R_1 = (R ** 2 + k ** 2 - r ** 2) / (2 * R)
+
+    F_1 = lambda x, a : -np.power(a ** 2 - x ** 2, 1.5) / 3
+    F_2 = lambda x, a : (np.arcsin(x / a) + 0.5 * np.sin(2 * np.arcsin(x / a))) * 0.5 * a ** 2
+
+    V = F_1(k, k) - F_1(R_1, k)
+    V += F_1(R_1 - R, r) - F_1(-r, r)
+    V += R * (F_2(R_1 - R, r) - F_2(-r, r))
+
+    return V * 4 * np.pi
+
 
 # --------------
 # Sampling
@@ -291,10 +309,13 @@ def convergencePlot(N, radius, k, R, r, maxThrows, throwsSamples):
         means[:, i] = np.mean(vols, axis=1)
         stds[:,  i] = np.std(vols, axis=1)
 
+    exactVolume = volumeAnalytical(k, R, r)
+
     # plot mean with std as error bars
     fig, ax = plt.subplots()
     ax.errorbar(throwsList, means[0, :], yerr=stds[0, :], fmt='o', label="uniform")
     ax.errorbar(throwsList, means[1, :], yerr=stds[1, :], fmt='o', label="deterministic")
+    ax.hlines(exactVolume, np.min(throwsList), np.max(throwsList), linestyle="dashed", color="grey", label="exact")
     ax.set_xscale("log")
     ax.set_xlabel("Amount of throws")
     ax.set_ylabel("Volume estimate (a.u.)")
@@ -388,7 +409,7 @@ def main():
         k=1, 
         R=0.75, 
         r=0.4, 
-        throws=1e5)
+        throws=int(1e5))
     
     print("Starting convergence plot for case a...")
     convergencePlot(
@@ -397,7 +418,7 @@ def main():
         k=1, 
         R=0.75, 
         r=0.4, 
-        maxThrows=1e5,
+        maxThrows=int(1e5),
         throwsSamples=10)
 
 
@@ -415,12 +436,12 @@ def main():
     
     print("Starting convergence plot for case b...")
     convergencePlot(
-        N=10000,
+        N=100,
         radius=1.1, 
         k=1, 
-        R=0.7, 
+        R=0.5, 
         r=0.5, 
-        maxThrows=100,
+        maxThrows=int(1e5),
         throwsSamples=10)
  
     # plot points for case a
