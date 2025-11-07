@@ -11,7 +11,8 @@ from tqdm import trange
 # Volume dimensions
 # --------------
 def sphere(x, y, z, k):
-    """Checks if the point is within the sphere and passes True if so."""
+    """Checks if passed coordinates are within the sphere. 
+    Returns a boolean array with True for points within the sphere."""
     if k <= 0:
         raise ValueError(f"k needs to be > 0. You got k: {k}")
 
@@ -22,7 +23,8 @@ def sphere(x, y, z, k):
 
 
 def torus(x, y, z, R, r):
-    """Checks if the point is within the torus and passes True if so."""
+    """Checks if passed coordinates are within the torus. 
+    Returns a boolean array with True for points within the torus."""
     if R <= 0 or r <= 0:
         raise ValueError(f"R and r need to be > 0." 
                          f"You got R: {R} and r: {r}")
@@ -37,6 +39,8 @@ def torus(x, y, z, R, r):
 # Sampling
 # --------------
 def uniformrandom(N, seed=None):
+    """Uniform random sampler for N number of x, y z, coordinates as 
+    an array."""
     np.random.seed(seed=seed)
     x = np.random.rand(N)
     y = np.random.rand(N)
@@ -46,10 +50,11 @@ def uniformrandom(N, seed=None):
 
 
 def deterministic_XYZ(N, seed=None):
+    """Deterministic sampler for a sequence."""
     sequence = np.empty((3, N))
     m = 3.8
 
-    # define a self-contained region
+    # Definea a self-contained region
     b = m * 0.5 * (1 - 0.5)
     a = m * b * (1 - b)
     
@@ -63,8 +68,6 @@ def deterministic_XYZ(N, seed=None):
     return sequence 
 
 
-# define random number generator
-
 # --------------
 # Errors
 # --------------
@@ -76,15 +79,32 @@ def standard_error(sample_std, N):
 # --------------
 # monte carlo
 # --------------
-def montecarlo(prng, radius, k, R, r, throws, xc=0, yc=0, zc=0, p=None, plot=False):
+def montecarlo(
+        prng, 
+        radius, 
+        k, 
+        R, 
+        r, 
+        throws, 
+        xc=0, 
+        yc=0, 
+        zc=0, 
+        p=None, 
+        plot=False):
+    """Runs a single monte carlo method to solve the intersection volume 
+    of two shapes: sphere and torus. Returns the volume and the sum of 
+    the total amount of points calculated to be in the intersection."""
+    # Assign random sampler and get x, y and z arrays
     rand = prng(throws)
     x, y, z = radius * (np.ones((3, throws)) - 2 * rand)
 
+    # Finds which points hit the sphere and torus
     sphereHits = sphere(x, y, z, k)
     torusHits = torus(x-xc, y-yc, z-zc, R, r)
 
     totalHits = np.sum(np.logical_and(sphereHits, torusHits))
 
+    # Determine volume of intersection
     box_volume = (2 * radius) ** 3
     intersection_volume = box_volume * (totalHits / throws)
 
@@ -93,11 +113,12 @@ def montecarlo(prng, radius, k, R, r, throws, xc=0, yc=0, zc=0, p=None, plot=Fal
 
     return intersection_volume, totalHits
 
+
 def mc_importance(prng, b1_r, k, R, r, throws, xc=0, yc=0, zc=0.1, p=0.5, plot=False):
-    """b1_r : radius of box 1
-    p : sampling probability inside box 1
-    w: weight for importance sampling
-    """
+    """Runs asingle monte carlo method with importance sampling 
+    (for p and 1-p) to solve the intersection volume of two shapes: 
+    sphere and torus. Returns the volume and the sum of the total amount 
+    of points calculated to be in the intersection. """
     # box 1 (half)
     box1_x = box1_y = box1_z = b1_r
     
@@ -147,13 +168,14 @@ def mc_importance(prng, b1_r, k, R, r, throws, xc=0, yc=0, zc=0.1, p=0.5, plot=F
         in_box2, p/box1_volume + (1-p)/ box2_volume, p/box1_volume)
     w = 1.0 / q
 
-    # importance sampling
+    # determine weighted intersection volume
     intersection = np.sum(w*hits)/throws
 
     if plot:
         plotintersection(x, y, z, sphereHits, torusHits, b1_r)
 
     return intersection, totalHits
+
 
 def run_monte_carlo(
         mc=montecarlo,
@@ -168,8 +190,9 @@ def run_monte_carlo(
         yc=0,
         zc=0,
         p=None):
-    """Runs the monte carlo simulation N times."""
-
+    """Runs a monte carlo simulation (regular or importance sampling) N 
+    times and prints the average volume and variance of the intersection 
+    volume."""
     all_volumes = []
     all_hits = []
 
@@ -181,6 +204,7 @@ def run_monte_carlo(
         all_hits.append(hits)
     t1 = time.perf_counter()
 
+    # Determines standard deviation and average volume
     sample_std = np.std(all_volumes)
     average_volume = np.mean(all_volumes)
 
@@ -191,10 +215,12 @@ def run_monte_carlo(
 
     return sample_std, average_volume
 
+
 # --------------
 # Plotting code
 # --------------
 def plotintersection(x, y, z, sphereHits, torusHits, radius):
+    """Plots the intersected points."""
     # store points for each category
     
     # Add code
@@ -244,6 +270,9 @@ def plotDeterministicHistogram(N):
 # Running code
 # --------------
 def main():
+    """
+    TO DO: standard error calculation/plotting
+    """
     # case a:
     print("Starting case a ...")
     a_sample_std, a_average_volume = run_monte_carlo(
