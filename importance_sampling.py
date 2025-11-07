@@ -142,7 +142,7 @@ def mc_importance(prng, b1_r, k, R, r, throws, xc=0, yc=0, zc=0.1, p=0.5, plot=F
     
     # radius and height of small box (half)
     box2_x = box2_y = min(R+r, b1_r)
-    box2_z = r
+    box2_z = r + 0.1
 
     # box volumes
     box1_volume = (2 * b1_r) ** 3
