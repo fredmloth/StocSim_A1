@@ -141,8 +141,8 @@ def mc_importance(prng, b1_r, k, R, r, throws, xc=0, yc=0, zc=0.1, p=0.5, plot=F
     box1_x = box1_y = box1_z = b1_r
     
     # radius and height of small box (half)
-    box2_x = box2_z = min(R+r, b1_r)
-    box2_y = r
+    box2_x = box2_y = min(R+r, b1_r)
+    box2_z = r
 
     # box volumes
     box1_volume = (2 * b1_r) ** 3
@@ -378,6 +378,9 @@ def plot_pvalues(
 # Running code
 # --------------
 def main():
+    # set a global seed for repeatability
+    np.random.seed(seed=2939425)
+    
     # case a:
     print("Starting case a ...")
     a_sample_std, a_average_volume, _ = run_monte_carlo(
