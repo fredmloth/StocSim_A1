@@ -262,6 +262,7 @@ def plotintersection(x, y, z, sphereHits, torusHits, radius):
     ax.set_ylim([-radius, radius])
     ax.set_zlim([-radius, radius])
 
+    fig.savefig("intersection_plot.png")
     plt.show()
 
 
@@ -270,11 +271,14 @@ def plotDeterministicHistogram(N):
     xDet, _, _ = deterministic_XYZ(N)
     xRand, _, _ = uniformrandom(N)
 
-    plt.hist(xDet, density=False, label="deterministic")
-    plt.hist(xRand, density=False, histtype="step", label="numpy prng")
-    plt.xlabel("Sample value")
-    plt.ylabel("Density of occurence")
-    plt.legend()
+    fig, ax = plt.subplots()
+    ax.hist(xDet, density=False, label="deterministic")
+    ax.hist(xRand, density=False, histtype="step", label="numpy prng")
+    ax.set_xlabel("Sample value")
+    ax.set_ylabel("Density of occurence")
+    ax.legend()
+    
+    fig.savefig("deterministic_histogram.png")
     plt.show()
     
     return
@@ -315,6 +319,7 @@ def convergencePlot(N, radius, k, R, r, maxThrows, throwsSamples):
     ax.set_title(f"Convergence Plot (N={N} repeats)")
     ax.legend()
 
+    fig.savefig("convergence_plot.png")
     plt.show()
 
 
@@ -365,6 +370,7 @@ def plot_pvalues(
     ax.grid(True, alpha=0.3)
     ax.legend()
 
+    fig.savefig("importance_sampling.png")
     plt.show()
 
 
